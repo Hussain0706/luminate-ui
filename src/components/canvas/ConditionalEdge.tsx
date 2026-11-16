@@ -5,7 +5,9 @@ import {
   EdgeProps,
   getBezierPath,
 } from '@xyflow/react';
-import { GitBranch, Check, CornerDownRight } from 'lucide-react';
+import { GitBranch, Check, CornerDownRight, Sliders } from 'lucide-react';
+import { useWorkflowStore } from '../../store/useWorkflowStore';
+import { soundEffects } from '../../services/soundFx';
 
 const ConditionalEdgeComponent = ({
   id,
@@ -29,6 +31,8 @@ const ConditionalEdgeComponent = ({
     targetPosition,
   });
 
+  const setActiveEdgeModalId = useWorkflowStore((s) => (s as any).setActiveEdgeModalId);
+
   const status = data?.status || 'idle';
   const label = data?.label || '';
   const isFallback = !!data?.isFallback;
@@ -43,16 +47,24 @@ const ConditionalEdgeComponent = ({
     strokeColor = '#38bdf8'; // sky
     strokeWidth = 3;
     isDashed = true;
-    glowFilter = 'drop-shadow(0 0 6px rgba(56, 189, 248, 0.8))';
+    glowFilter = 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.9))';
   } else if (status === 'passed') {
     strokeColor = '#10b981'; // emerald
     strokeWidth = 2.5;
-    glowFilter = 'drop-shadow(0 0 4px rgba(16, 185, 129, 0.6))';
+    glowFilter = 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.7))';
   } else if (status === 'skipped') {
     strokeColor = '#1e293b'; // dim
     strokeWidth = 1.5;
     isDashed = true;
   }
+
+  const handleEdgeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    soundEffects.playClick();
+    if (setActiveEdgeModalId) {
+      setActiveEdgeModalId(id);
+    }
+  };
 
   return (
     <>
@@ -70,6 +82,13 @@ const ConditionalEdgeComponent = ({
         }}
       />
 
+      {/* Animated glowing particle packet traveling along edge when active */}
+      {status === 'active' && (
+        <circle r="4" fill="#38bdf8" filter="drop-shadow(0 0 6px #38bdf8)">
+          <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
+        </circle>
+      )}
+
       {label && (
         <EdgeLabelRenderer>
           <div
@@ -80,27 +99,31 @@ const ConditionalEdgeComponent = ({
             }}
             className="nodrag nopan"
           >
-            <div
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono border backdrop-blur-md transition-all duration-300 shadow-sm ${
+            <button
+              type="button"
+              onClick={handleEdgeClick}
+              title="Click to edit condition logic"
+              className={`group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border backdrop-blur-md transition-all duration-300 shadow-md active:scale-95 cursor-pointer ${
                 status === 'active'
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.5)] animate-pulse'
+                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.6)] animate-pulse'
                   : status === 'passed'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
+                  ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
                   : status === 'skipped'
-                  ? 'bg-slate-900/60 text-slate-500 border-slate-800 opacity-60'
+                  ? 'bg-slate-900/80 text-slate-500 border-slate-800 opacity-60'
                   : isFallback
-                  ? 'bg-slate-900/90 text-purple-300 border-purple-500/30'
-                  : 'bg-slate-900/90 text-slate-300 border-slate-700/80 hover:border-slate-500'
+                  ? 'bg-slate-900/90 text-purple-300 border-purple-500/50 hover:border-purple-400 hover:bg-slate-800'
+                  : 'bg-slate-900/95 text-slate-200 border-slate-700 hover:border-sky-400 hover:bg-slate-800'
               }`}
             >
               {isFallback ? (
-                <CornerDownRight className="w-2.5 h-2.5 text-purple-400" />
+                <CornerDownRight className="w-3 h-3 text-purple-400" />
               ) : (
-                <GitBranch className="w-2.5 h-2.5 text-sky-400" />
+                <GitBranch className="w-3 h-3 text-sky-400" />
               )}
               <span>{label}</span>
-              {status === 'passed' && <Check className="w-2.5 h-2.5 text-emerald-400" />}
-            </div>
+              {status === 'passed' && <Check className="w-3 h-3 text-emerald-400" />}
+              <Sliders className="w-2.5 h-2.5 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+            </button>
           </div>
         </EdgeLabelRenderer>
       )}

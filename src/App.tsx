@@ -1,4 +1,4 @@
-import React, { useReducer, useMemo, useState } from 'react';
+import React, { useReducer, useMemo, useState, useEffect } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -8,19 +8,15 @@ import {
 } from '@xyflow/react';
 import {
   Sparkles,
-  Layers,
-  ChevronDown,
-  ChevronUp,
-  Cpu,
-  Zap,
   Globe,
-  Sliders,
-  Play,
   Share2,
   Maximize2,
   Minimize2,
   Columns,
   LayoutGrid,
+  Volume2,
+  VolumeX,
+  Command,
 } from 'lucide-react';
 
 import { useWorkflowStore } from './store/useWorkflowStore';
@@ -35,7 +31,10 @@ import { ApprovalModal } from './components/modals/ApprovalModal';
 import { ExportModal } from './components/modals/ExportModal';
 import { ImportModal } from './components/modals/ImportModal';
 import { WebLLMModal } from './components/modals/WebLLMModal';
+import { CommandPalette } from './components/common/CommandPalette';
+import { EdgeConditionModal } from './components/modals/EdgeConditionModal';
 import { WORKFLOW_TEMPLATES } from './constants/templates';
+import { soundEffects } from './services/soundFx';
 
 function FlowCanvas() {
   const nodes = useWorkflowStore((s) => s.nodes);
@@ -93,24 +92,46 @@ export default function App() {
     initialWorkflowState
   );
 
-  const nodes = useWorkflowStore((s) => s.nodes);
-  const edges = useWorkflowStore((s) => s.edges);
   const engineMode = useWorkflowStore((s) => s.engineMode);
   const loadTemplate = useWorkflowStore((s) => s.loadTemplate);
   const setExportModalOpen = useWorkflowStore((s) => s.setExportModalOpen);
   const setWebLLMModalOpen = useWorkflowStore((s) => s.setWebLLMModalOpen);
+  const setCommandPaletteOpen = useWorkflowStore((s) => s.setCommandPaletteOpen);
+
+  // Sound FX State
+  const [soundEnabled, setSoundEnabled] = useState(soundEffects.isEnabled());
 
   // View modes: 'canvas' (spacious focused canvas), 'split' (balanced split), 'sandbox' (browser focused)
   const [viewMode, setViewMode] = useState<'canvas' | 'split' | 'sandbox'>('split');
 
-  const activeBreakpoints = nodes.filter((n) => n.data.breakpointEnabled).length;
+  // Global hotkey: Cmd+K / Ctrl+K opens Command Palette
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        soundEffects.playBlip();
+        setCommandPaletteOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [setCommandPaletteOpen]);
+
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    soundEffects.setEnabled(next);
+    setSoundEnabled(next);
+    if (next) {
+      soundEffects.playBlip();
+    }
+  };
 
   return (
     <ReactFlowProvider>
       <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#090d16] text-slate-100">
         {/* Top Navigation Bar */}
         <header className="h-14 border-b border-slate-800 bg-slate-900 px-4 flex items-center justify-between z-30 select-none shadow-md">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-[0_0_15px_rgba(56,189,248,0.4)]">
                 <Sparkles className="w-4 h-4 text-white" />
@@ -122,14 +143,33 @@ export default function App() {
 
             <div className="h-5 w-[1px] bg-slate-800" />
 
+            {/* Command Palette Trigger Button */}
+            <button
+              onClick={() => {
+                soundEffects.playBlip();
+                setCommandPaletteOpen(true);
+              }}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-xs text-slate-400 hover:text-slate-200 transition-all shadow-inner group"
+              title="Quick Search & Actions (Cmd+K)"
+            >
+              <Command className="w-3.5 h-3.5 text-sky-400 group-hover:scale-110 transition-transform" />
+              <span>Search actions...</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-400 border border-slate-700">
+                ⌘K
+              </kbd>
+            </button>
+
             {/* Template Selector Buttons in Header */}
-            <div className="hidden lg:flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+            <div className="hidden xl:flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
               <span className="text-slate-400 text-[11px] font-mono px-2">Template:</span>
               {WORKFLOW_TEMPLATES.map((tmpl) => (
                 <button
                   key={tmpl.id}
-                  onClick={() => loadTemplate(tmpl.id)}
-                  className="px-3 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all active:scale-95 border border-transparent hover:border-slate-700"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    loadTemplate(tmpl.id);
+                  }}
+                  className="px-2.5 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-all active:scale-95 border border-transparent hover:border-slate-700 text-xs"
                 >
                   {tmpl.name}
                 </button>
@@ -140,7 +180,10 @@ export default function App() {
           {/* Center: View Switcher (Canvas Studio vs Split View vs Browser Sandbox) */}
           <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 shadow-inner">
             <button
-              onClick={() => setViewMode('canvas')}
+              onClick={() => {
+                soundEffects.playClick();
+                setViewMode('canvas');
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === 'canvas'
                   ? 'bg-sky-500 text-white shadow-md'
@@ -153,7 +196,10 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setViewMode('split')}
+              onClick={() => {
+                soundEffects.playClick();
+                setViewMode('split');
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === 'split'
                   ? 'bg-sky-500 text-white shadow-md'
@@ -166,7 +212,10 @@ export default function App() {
             </button>
 
             <button
-              onClick={() => setViewMode('sandbox')}
+              onClick={() => {
+                soundEffects.playClick();
+                setViewMode('sandbox');
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === 'sandbox'
                   ? 'bg-sky-500 text-white shadow-md'
@@ -181,13 +230,29 @@ export default function App() {
 
           {/* Right Header Status & Action Buttons */}
           <div className="flex items-center gap-2.5">
+            {/* Sound FX Toggle Button */}
+            <button
+              onClick={toggleSound}
+              className={`p-2 rounded-xl border transition-all ${
+                soundEnabled
+                  ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30 shadow-sm'
+                  : 'bg-slate-950 text-slate-500 border-slate-800 hover:text-slate-300'
+              }`}
+              title={soundEnabled ? 'Web Audio FX: Enabled' : 'Web Audio FX: Muted'}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+
             {/* Active Engine Pill */}
             <div
-              onClick={() => setWebLLMModalOpen(true)}
+              onClick={() => {
+                soundEffects.playClick();
+                setWebLLMModalOpen(true);
+              }}
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-mono border bg-slate-950 border-slate-800 hover:border-slate-700 cursor-pointer shadow-sm"
               title="Click to configure execution engine"
             >
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-slate-200 font-semibold">
                 {engineMode === 'webllm' ? 'WebGPU AI' : 'Simulated Engine'}
               </span>
@@ -196,7 +261,10 @@ export default function App() {
 
             {/* Export Button */}
             <button
-              onClick={() => setExportModalOpen(true)}
+              onClick={() => {
+                soundEffects.playClick();
+                setExportModalOpen(true);
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold border border-slate-700 hover:border-slate-600 transition-all shadow-sm active:scale-95"
             >
               <Share2 className="w-3.5 h-3.5 text-sky-400" />
@@ -240,14 +308,20 @@ export default function App() {
 
                 <div className="flex items-center gap-1 text-slate-400">
                   <button
-                    onClick={() => setViewMode('canvas')}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setViewMode('canvas');
+                    }}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition-colors"
                   >
                     <Minimize2 className="w-3 h-3" />
                     <span>Hide Sandbox</span>
                   </button>
                   <button
-                    onClick={() => setViewMode('sandbox')}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setViewMode('sandbox');
+                    }}
                     className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold transition-colors"
                   >
                     <Maximize2 className="w-3 h-3" />
@@ -261,7 +335,10 @@ export default function App() {
             {viewMode === 'canvas' && (
               <div className="absolute bottom-5 right-20 z-30">
                 <button
-                  onClick={() => setViewMode('split')}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setViewMode('split');
+                  }}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-100 text-xs font-bold border border-purple-500/40 hover:border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.3)] backdrop-blur-xl transition-all active:scale-95"
                 >
                   <Globe className="w-4 h-4 text-purple-400" />
@@ -299,6 +376,8 @@ export default function App() {
         <ExportModal />
         <ImportModal />
         <WebLLMModal />
+        <CommandPalette />
+        <EdgeConditionModal />
       </div>
     </ReactFlowProvider>
   );

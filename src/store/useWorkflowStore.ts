@@ -11,17 +11,22 @@ import {
   Connection,
 } from '@xyflow/react';
 import {
+  AgentChatMessage,
   AgentNodeData,
   AgentRole,
+  DeviceFrame,
   EngineMode,
   ExecutionLog,
   LogLevel,
+  SandboxConsoleLog,
   SandboxState,
   TimeTravelSnapshot,
   WorkflowMetrics,
 } from '../types';
 import { WORKFLOW_TEMPLATES } from '../constants/templates';
 import { MOCK_PAGES } from '../constants/mockPages';
+import { calculateAutoLayout } from '../utils/autoLayout';
+import { soundEffects } from '../services/soundFx';
 
 interface WorkflowStore {
   // Canvas State
@@ -38,19 +43,23 @@ interface WorkflowStore {
   // Live Telemetry
   logs: ExecutionLog[];
   logFilter: 'ALL' | LogLevel;
+  chatMessages: AgentChatMessage[];
   metrics: WorkflowMetrics;
   sandboxState: SandboxState;
+  deviceFrame: DeviceFrame;
 
   // Time Travel
   timeTravelSnapshots: TimeTravelSnapshot[];
   timeTravelIndex: number | null; // null = live edge
 
   // UI state
-  activeTab: 'logs' | 'payload' | 'metrics';
+  activeTab: 'logs' | 'chat' | 'payload' | 'analytics';
   isWebLLMModalOpen: boolean;
   isExportModalOpen: boolean;
   isImportModalOpen: boolean;
   isApprovalModalOpen: boolean;
+  isCommandPaletteOpen: boolean;
+  activeEdgeModalId: string | null;
 
   // Actions
   setNodes: (nodes: Node<AgentNodeData>[]) => void;
@@ -60,26 +69,35 @@ interface WorkflowStore {
   onConnect: OnConnect;
   setSelectedNodeId: (id: string | null) => void;
   addAgentNode: (role: AgentRole, position?: { x: number; y: number }) => void;
+  duplicateNode: (nodeId: string) => void;
+  deleteNode: (nodeId: string) => void;
   updateNodeData: (nodeId: string, partial: Partial<AgentNodeData>) => void;
   toggleNodeBreakpoint: (nodeId: string) => void;
   loadTemplate: (templateId: string) => void;
+  autoArrangeGraph: (direction?: 'LR' | 'TB') => void;
   setActiveGoal: (goal: string) => void;
   setEngineMode: (mode: EngineMode) => void;
   setSpeedMultiplier: (speed: number) => void;
   setMockPageType: (type: 'ecommerce' | 'news' | 'finance') => void;
+  setDeviceFrame: (frame: DeviceFrame) => void;
   appendLog: (log: ExecutionLog) => void;
   clearLogs: () => void;
   setLogFilter: (filter: 'ALL' | LogLevel) => void;
+  appendChatMessage: (msg: AgentChatMessage) => void;
+  clearChatMessages: () => void;
   updateMetrics: (partial: Partial<WorkflowMetrics>) => void;
   updateSandbox: (partial: Partial<SandboxState>) => void;
+  appendSandboxConsole: (log: SandboxConsoleLog) => void;
   recordSnapshot: (snapshot: TimeTravelSnapshot) => void;
   scrubToSnapshot: (index: number | null) => void;
   resetExecutionState: () => void;
-  setActiveTab: (tab: 'logs' | 'payload' | 'metrics') => void;
+  setActiveTab: (tab: 'logs' | 'chat' | 'payload' | 'analytics') => void;
   setWebLLMModalOpen: (open: boolean) => void;
   setExportModalOpen: (open: boolean) => void;
   setImportModalOpen: (open: boolean) => void;
   setApprovalModalOpen: (open: boolean) => void;
+  setCommandPaletteOpen: (open: boolean) => void;
+  setActiveEdgeModalId: (id: string | null) => void;
   exportAsJson: () => string;
   exportAsMermaid: () => string;
   importWorkflow: (jsonString: string) => boolean;
@@ -91,6 +109,7 @@ const DEFAULT_METRICS: WorkflowMetrics = {
   totalLatencyMs: 0,
   costSaved: 0.0,
   stepCount: 0,
+  estimatedGpt4Cost: 0.0,
 };
 
 const initialTemplate = WORKFLOW_TEMPLATES[0];
@@ -104,6 +123,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   engineMode: 'simulated',
   speedMultiplier: 1,
   mockPageType: initialTemplate.mockPageType,
+  deviceFrame: 'desktop',
 
   logs: [
     {
@@ -116,6 +136,16 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     },
   ],
   logFilter: 'ALL',
+  chatMessages: [
+    {
+      id: 'chat-welcome',
+      timestamp: Date.now(),
+      nodeId: 'node-supervisor',
+      agentRole: 'supervisor',
+      agentName: 'Supervisor Agent',
+      content: 'Standing by to coordinate multi-agent execution. Ready for mission objectives.',
+    },
+  ],
   metrics: DEFAULT_METRICS,
   sandboxState: {
     currentUrl: initialTemplate.mockUrl,
@@ -125,6 +155,10 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     cursorPosition: { x: 0, y: 0, visible: false },
     extractedData: null,
     mockPageType: 'ecommerce',
+    consoleLogs: [
+      { id: 'c-1', type: 'info', text: '[Navigation] Loaded document https://store.hypertech.io/products/quantum-gpu-x1', timestamp: Date.now() - 2000 },
+      { id: 'c-2', type: 'log', text: '[DOM] 6 target selectors registered and ready for extraction', timestamp: Date.now() - 1000 },
+    ],
   },
 
   timeTravelSnapshots: [],
@@ -135,6 +169,8 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   isExportModalOpen: false,
   isImportModalOpen: false,
   isApprovalModalOpen: false,
+  isCommandPaletteOpen: false,
+  activeEdgeModalId: null,
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),
@@ -149,7 +185,8 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       edges: applyEdgeChanges(changes, get().edges),
     }),
 
-  onConnect: (connection: Connection) =>
+  onConnect: (connection: Connection) => {
+    soundEffects.playClick();
     set({
       edges: addEdge(
         {
@@ -160,11 +197,13 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         },
         get().edges
       ),
-    }),
+    });
+  },
 
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
 
   addAgentNode: (role, position) => {
+    soundEffects.playNodeActive();
     const roleLabels: Record<AgentRole, { label: string; desc: string; tools: string[]; prompt: string }> = {
       supervisor: {
         label: 'Supervisor Agent',
@@ -202,8 +241,8 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     const newNodeId = `node-${role}-${Date.now().toString(36).substring(4)}`;
     const currentNodes = get().nodes;
     const defaultPos = position || {
-      x: 100 + (currentNodes.length % 4) * 260,
-      y: 120 + Math.floor(currentNodes.length / 4) * 220,
+      x: 100 + (currentNodes.length % 3) * 360,
+      y: 120 + Math.floor(currentNodes.length / 3) * 280,
     };
 
     const newNode: Node<AgentNodeData> = {
@@ -227,6 +266,40 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     set({ nodes: [...currentNodes, newNode], selectedNodeId: newNodeId });
   },
 
+  duplicateNode: (nodeId: string) => {
+    soundEffects.playClick();
+    const sourceNode = get().nodes.find((n) => n.id === nodeId);
+    if (!sourceNode) return;
+
+    const newId = `${sourceNode.id}-copy-${Date.now().toString(36).substring(4)}`;
+    const newNode: Node<AgentNodeData> = {
+      ...sourceNode,
+      id: newId,
+      position: {
+        x: sourceNode.position.x + 40,
+        y: sourceNode.position.y + 40,
+      },
+      data: {
+        ...sourceNode.data,
+        id: newId,
+        label: `${sourceNode.data.label} (Copy)`,
+        status: 'IDLE',
+        metrics: { tokens: 0, latencyMs: 0, tokensPerSec: 0 },
+      },
+    };
+
+    set({ nodes: [...get().nodes, newNode], selectedNodeId: newId });
+  },
+
+  deleteNode: (nodeId: string) => {
+    soundEffects.playClick();
+    set({
+      nodes: get().nodes.filter((n) => n.id !== nodeId),
+      edges: get().edges.filter((e) => e.source !== nodeId && e.target !== nodeId),
+      selectedNodeId: null,
+    });
+  },
+
   updateNodeData: (nodeId, partial) => {
     set({
       nodes: get().nodes.map((node) => {
@@ -242,6 +315,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   },
 
   toggleNodeBreakpoint: (nodeId) => {
+    soundEffects.playClick();
     set({
       nodes: get().nodes.map((node) => {
         if (node.id === nodeId) {
@@ -259,6 +333,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   },
 
   loadTemplate: (templateId) => {
+    soundEffects.playClick();
     const tmpl = WORKFLOW_TEMPLATES.find((t) => t.id === templateId) || WORKFLOW_TEMPLATES[0];
     const pageData = MOCK_PAGES[tmpl.mockPageType] || MOCK_PAGES.ecommerce;
 
@@ -271,6 +346,16 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       timeTravelSnapshots: [],
       timeTravelIndex: null,
       metrics: DEFAULT_METRICS,
+      chatMessages: [
+        {
+          id: `chat-${Date.now()}`,
+          timestamp: Date.now(),
+          nodeId: 'node-supervisor',
+          agentRole: 'supervisor',
+          agentName: 'Supervisor Agent',
+          content: `Loaded workflow mission: "${tmpl.name}". Standing by for start command.`,
+        },
+      ],
       sandboxState: {
         currentUrl: tmpl.mockUrl,
         pageTitle: pageData.title,
@@ -279,6 +364,9 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         cursorPosition: { x: 0, y: 0, visible: false },
         extractedData: null,
         mockPageType: tmpl.mockPageType,
+        consoleLogs: [
+          { id: `c-${Date.now()}-1`, type: 'info', text: `[Navigation] Navigated to ${tmpl.mockUrl}`, timestamp: Date.now() },
+        ],
       },
       logs: [
         {
@@ -293,9 +381,25 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     });
   },
 
+  autoArrangeGraph: (direction = 'LR') => {
+    soundEffects.playClick();
+    const arrangedNodes = calculateAutoLayout(get().nodes, get().edges, direction);
+    set({ nodes: arrangedNodes });
+  },
+
   setActiveGoal: (goal) => set({ activeGoal: goal }),
-  setEngineMode: (mode) => set({ engineMode: mode }),
-  setSpeedMultiplier: (speed) => set({ speedMultiplier: speed }),
+  setEngineMode: (mode) => {
+    soundEffects.playClick();
+    set({ engineMode: mode });
+  },
+  setSpeedMultiplier: (speed) => {
+    soundEffects.playClick();
+    set({ speedMultiplier: speed });
+  },
+  setDeviceFrame: (frame) => {
+    soundEffects.playClick();
+    set({ deviceFrame: frame });
+  },
   setMockPageType: (type) => {
     const page = MOCK_PAGES[type] || MOCK_PAGES.ecommerce;
     set({
@@ -305,26 +409,63 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
         currentUrl: page.url,
         pageTitle: page.title,
         mockPageType: type,
+        consoleLogs: [
+          ...get().sandboxState.consoleLogs,
+          { id: `c-${Date.now()}`, type: 'info', text: `[Navigation] Switched target domain to ${page.url}`, timestamp: Date.now() },
+        ],
       },
     });
   },
 
   appendLog: (log) =>
     set((state) => ({
-      logs: [...state.logs.slice(-500), log], // keep last 500 logs for high responsiveness
+      logs: [...state.logs.slice(-500), log],
     })),
 
-  clearLogs: () => set({ logs: [] }),
-  setLogFilter: (filter) => set({ logFilter: filter }),
+  clearLogs: () => {
+    soundEffects.playClick();
+    set({ logs: [] });
+  },
+  setLogFilter: (filter) => {
+    soundEffects.playClick();
+    set({ logFilter: filter });
+  },
+
+  appendChatMessage: (msg) =>
+    set((state) => ({
+      chatMessages: [...state.chatMessages.slice(-200), msg],
+    })),
+
+  clearChatMessages: () => {
+    soundEffects.playClick();
+    set({ chatMessages: [] });
+  },
 
   updateMetrics: (partial) =>
-    set((state) => ({
-      metrics: { ...state.metrics, ...partial },
-    })),
+    set((state) => {
+      const newTokens = partial.totalTokens ?? state.metrics.totalTokens;
+      // Estimate GPT-4o cost at $0.005 / 1,000 tokens
+      const estimatedGpt4Cost = Number(((newTokens / 1000) * 0.005).toFixed(4));
+      return {
+        metrics: {
+          ...state.metrics,
+          ...partial,
+          estimatedGpt4Cost,
+        },
+      };
+    }),
 
   updateSandbox: (partial) =>
     set((state) => ({
       sandboxState: { ...state.sandboxState, ...partial },
+    })),
+
+  appendSandboxConsole: (log) =>
+    set((state) => ({
+      sandboxState: {
+        ...state.sandboxState,
+        consoleLogs: [...state.sandboxState.consoleLogs.slice(-100), log],
+      },
     })),
 
   recordSnapshot: (snapshot) =>
@@ -333,6 +474,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     })),
 
   scrubToSnapshot: (index) => {
+    soundEffects.playClick();
     if (index === null) {
       set({ timeTravelIndex: null });
       return;
@@ -352,6 +494,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   },
 
   resetExecutionState: () => {
+    soundEffects.playClick();
     set((state) => ({
       nodes: state.nodes.map((n) => ({
         ...n,
@@ -361,6 +504,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
           currentStepText: undefined,
           lastThought: undefined,
           customJsonPayload: undefined,
+          activeTool: undefined,
         },
       })),
       edges: state.edges.map((e) => ({
@@ -382,15 +526,38 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     }));
   },
 
-  setActiveTab: (tab) => set({ activeTab: tab }),
-  setWebLLMModalOpen: (open) => set({ isWebLLMModalOpen: open }),
-  setExportModalOpen: (open) => set({ isExportModalOpen: open }),
-  setImportModalOpen: (open) => set({ isImportModalOpen: open }),
-  setApprovalModalOpen: (open) => set({ isApprovalModalOpen: open }),
+  setActiveTab: (tab) => {
+    soundEffects.playClick();
+    set({ activeTab: tab });
+  },
+  setWebLLMModalOpen: (open) => {
+    soundEffects.playClick();
+    set({ isWebLLMModalOpen: open });
+  },
+  setExportModalOpen: (open) => {
+    soundEffects.playClick();
+    set({ isExportModalOpen: open });
+  },
+  setImportModalOpen: (open) => {
+    soundEffects.playClick();
+    set({ isImportModalOpen: open });
+  },
+  setApprovalModalOpen: (open) => {
+    soundEffects.playClick();
+    set({ isApprovalModalOpen: open });
+  },
+  setCommandPaletteOpen: (open) => {
+    soundEffects.playClick();
+    set({ isCommandPaletteOpen: open });
+  },
+  setActiveEdgeModalId: (id) => {
+    soundEffects.playClick();
+    set({ activeEdgeModalId: id });
+  },
 
   exportAsJson: () => {
     const data = {
-      version: '1.0.0',
+      version: '2.0.0',
       exportedAt: new Date().toISOString(),
       goal: get().activeGoal,
       mockPageType: get().mockPageType,
@@ -418,6 +585,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     try {
       const parsed = JSON.parse(jsonString);
       if (Array.isArray(parsed.nodes) && Array.isArray(parsed.edges)) {
+        soundEffects.playComplete();
         set({
           nodes: parsed.nodes,
           edges: parsed.edges,

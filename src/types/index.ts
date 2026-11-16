@@ -21,6 +21,11 @@ export interface AgentNodeData {
   customJsonPayload?: Record<string, any>;
   lastThought?: string;
   currentStepText?: string;
+  activeTool?: {
+    name: string;
+    args: any;
+    result?: any;
+  };
   metrics?: {
     tokens: number;
     latencyMs: number;
@@ -30,7 +35,7 @@ export interface AgentNodeData {
 
 export interface EdgeConditionData {
   conditionKey?: string;
-  operator?: '>' | '<' | '==' | '!=' | 'includes';
+  operator?: '>' | '<' | '==' | '!=' | 'includes' | '>=';
   thresholdValue?: any;
   label?: string;
   isFallback?: boolean; // else path
@@ -49,6 +54,30 @@ export interface ExecutionLog {
   payload?: any;
   tps?: number;
 }
+
+export interface AgentChatMessage {
+  id: string;
+  timestamp: number;
+  nodeId: string;
+  agentRole: AgentRole;
+  agentName: string;
+  content: string;
+  toolCall?: {
+    name: string;
+    args: any;
+    result?: any;
+  };
+  tokens?: number;
+}
+
+export interface SandboxConsoleLog {
+  id: string;
+  type: 'log' | 'info' | 'warn' | 'error';
+  text: string;
+  timestamp: number;
+}
+
+export type DeviceFrame = 'desktop' | 'tablet' | 'mobile';
 
 export interface SandboxElement {
   id: string;
@@ -71,6 +100,7 @@ export interface SandboxState {
   };
   extractedData: any;
   mockPageType: 'ecommerce' | 'news' | 'finance' | 'custom';
+  consoleLogs: SandboxConsoleLog[];
 }
 
 export interface WorkflowMetrics {
@@ -79,6 +109,7 @@ export interface WorkflowMetrics {
   totalLatencyMs: number;
   costSaved: number;
   stepCount: number;
+  estimatedGpt4Cost: number;
 }
 
 export interface TimeTravelSnapshot {

@@ -152,4 +152,64 @@ export const MOCK_PAGES: Record<string, MockWebpageData> = {
   <div id="conflict-disclosure">Disclosures: Funded in part by GreenFuture Ventures ($4.5M)</div>
 </article>`,
   },
+  finance: {
+    url: 'https://cloudsec.defense.io/clusters/prod-eu-west1/audit',
+    title: 'CloudSec Defense Platform — Production Zero-Day Audit',
+    favicon: '🛡️',
+    themeColor: '#ef4444',
+    elements: [
+      {
+        id: 'el-cve',
+        selector: '#cve-critical-alert',
+        tag: 'h1',
+        label: 'CVE Threat Identifier',
+        text: 'CRITICAL ALERT: CVE-2026-4921 (CVSS 9.8 Severity)',
+        dataValue: { cveId: 'CVE-2026-4921', severity: 'CRITICAL', cvssScore: 9.8, vector: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H' },
+        bounds: { top: 60, left: 30, width: 480, height: 44 },
+      },
+      {
+        id: 'el-exposure',
+        selector: '#affected-pod-count',
+        tag: 'div',
+        label: 'Affected Cluster Pods',
+        text: 'Exposed Endpoints: 3 Public Gateway Pods (auth-service:v1.8.2)',
+        dataValue: { podsImpacted: 3, namespace: 'prod-ingress', service: 'auth-service', currentVersion: '1.8.2' },
+        bounds: { top: 115, left: 30, width: 460, height: 30 },
+      },
+      {
+        id: 'el-exploit',
+        selector: '#exploit-vector',
+        tag: 'div',
+        label: 'Attack Vector',
+        text: 'Vector: Remote Code Execution via malformed claims in JWT Authorization header',
+        dataValue: { attackType: 'Remote Code Execution (RCE)', unauthenticated: true, inTheWild: true },
+        bounds: { top: 155, left: 30, width: 480, height: 35 },
+      },
+      {
+        id: 'el-patch',
+        selector: '#patch-status',
+        tag: 'div',
+        label: 'Remediation Status',
+        text: 'Fix Available: Official Vendor Patch v1.8.3 verified in staging registry',
+        dataValue: { patchAvailable: true, targetVersion: '1.8.3', stagingValidation: 'PASSED' },
+        bounds: { top: 200, left: 30, width: 470, height: 32 },
+      },
+      {
+        id: 'el-remediation',
+        selector: '#remediation-plan',
+        tag: 'table',
+        label: 'Hotpatch Rollout Schedule',
+        text: 'Rollout: Canary 10% -> Canary 50% -> 100% Rolling Deployment (Zero Downtime)',
+        dataValue: { canarySteps: ['10%', '50%', '100%'], estimatedDuration: '4m 30s', zeroDowntime: true },
+        bounds: { top: 242, left: 30, width: 480, height: 45 },
+      },
+    ],
+    rawHtmlPreview: `<div class="security-audit">
+  <h1 id="cve-critical-alert">CRITICAL ALERT: CVE-2026-4921 (CVSS 9.8 Severity)</h1>
+  <div id="affected-pod-count">Exposed Endpoints: 3 Public Gateway Pods</div>
+  <div id="exploit-vector">Vector: Remote Code Execution via malformed claims</div>
+  <div id="patch-status">Fix Available: Vendor Patch v1.8.3 verified</div>
+  <div id="remediation-plan">Canary 10% -> 50% -> 100% Rolling Deployment</div>
+</div>`,
+  },
 };

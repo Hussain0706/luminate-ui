@@ -1,4 +1,4 @@
-import { AgentNodeData, AgentRole, ExecutionLog, LogLevel, SandboxState, WorkflowState } from '../types';
+import { AgentChatMessage, AgentNodeData, AgentRole, ExecutionLog, LogLevel, SandboxConsoleLog, SandboxState, WorkflowState } from '../types';
 import { MOCK_PAGES } from '../constants/mockPages';
 import { webLLMService } from './webllmService';
 
@@ -13,6 +13,8 @@ export interface WorkflowStepEvent {
     | 'NODE_COMPLETE'
     | 'LOG_APPEND'
     | 'METRICS_UPDATE'
+    | 'CHAT_MESSAGE'
+    | 'CONSOLE_LOG'
     | 'WORKFLOW_FINISH';
   nodeId: string;
   role?: AgentRole;
@@ -30,6 +32,8 @@ export interface WorkflowStepEvent {
   branchCondition?: string;
   payload?: any;
   log?: ExecutionLog;
+  chatMessage?: AgentChatMessage;
+  consoleLog?: SandboxConsoleLog;
   metrics?: { tokens: number; tps: number; latencyMs: number };
 }
 
@@ -37,6 +41,7 @@ export interface WorkflowStepEvent {
 const AGENT_PERSONA_LOGIC: Record<AgentRole, {
   thoughts: (goal: string, prevData: any) => string[];
   tools: { name: string; args: any; result: (prev: any) => any }[];
+  chatStatement: (goal: string, prevData: any) => string;
   outputJson: (goal: string, prevData: any) => any;
 }> = {
   supervisor: {
@@ -53,6 +58,8 @@ const AGENT_PERSONA_LOGIC: Record<AgentRole, {
         result: () => ({ subtasks: ['scrape_pricing', 'validate_schema', 'conditional_route', 'synthesize_report'], priority: 'HIGH' }),
       },
     ],
+    chatStatement: (goal) =>
+      `Objective parsed: "${goal.slice(0, 75)}...". I have partitioned the workload into a 4-stage pipeline and dispatched the Web Scraper Agent to begin DOM extraction.`,
     outputJson: (goal) => ({
       mission: goal,
       workflowPlanId: 'WF-7821-X',
@@ -89,6 +96,8 @@ const AGENT_PERSONA_LOGIC: Record<AgentRole, {
         result: () => ({ vram: '24GB GDDR7', architecture: 'TensorCore 5.0', tdp: '285W' }),
       },
     ],
+    chatStatement: () =>
+      `DOM extraction complete. Target page yielded 6 verified selectors including product title, 22% flash discount badge, and $899.99 retail price point. Transmitting structured payload to Router Agent.`,
     outputJson: () => ({
       product: 'HyperTech Quantum GPU-X1 Extreme Edition (24GB GDDR7)',
       priceUSD: 899.99,
@@ -124,6 +133,8 @@ const AGENT_PERSONA_LOGIC: Record<AgentRole, {
         result: () => ({ confidence: 88.5, anomalies: 0 }),
       },
     ],
+    chatStatement: (_goal, prevData) =>
+      `Audit completed. Scraped data passed schema validation with 88.5% confidence. Risk score is LOW. Evaluating branch path: condition met for direct handoff to Summary Writer Agent.`,
     outputJson: (_goal, prevData) => ({
       routedAt: new Date().toISOString(),
       confidence: 88.5,
@@ -152,6 +163,8 @@ const AGENT_PERSONA_LOGIC: Record<AgentRole, {
         result: () => ({ riskScore: 0.04, isLegitimate: true }),
       },
     ],
+    chatStatement: () =>
+      `Cross-validation complete. 90-day historical data confirms $899.99 is an all-time low. Merchant license is valid with 0.04 fraud risk score. Enriched intelligence passed back to the Router.`,
     outputJson: (_goal, prevData) => ({
       enrichmentType: 'historical_verification',
       historicalLowConfirmed: true,
@@ -175,6 +188,8 @@ const AGENT_PERSONA_LOGIC: Record<AgentRole, {
         result: () => ({ format: 'markdown', sections: 4 }),
       },
     ],
+    chatStatement: () =>
+      `Executive Intelligence Memo finalized. Market recommendation is a STRATEGIC BUY: 22% discount verified authentic with genuine inventory. Full markdown report ready for export.`,
     outputJson: (goal, prevData) => ({
       reportTitle: 'EXECUTIVE INTELLIGENCE MEMO: Competitive Pricing Variance',
       summary: `Target product "${prevData?.upstreamPayload?.product || 'Quantum GPU-X1'}" is currently retailing at $${prevData?.upstreamPayload?.priceUSD || 899.99}, reflecting a 22% flash discount from $${prevData?.upstreamPayload?.msrpUSD || 1149.99} MSRP.`,
@@ -270,6 +285,17 @@ export class AgentExecutionEngine {
       },
     };
 
+    yield {
+      type: 'CONSOLE_LOG',
+      nodeId: 'sandbox',
+      consoleLog: {
+        id: `c-init-${Date.now()}`,
+        type: 'info',
+        text: `[Simulator] Multi-Agent session bound to ${pageData.url}`,
+        timestamp: Date.now(),
+      },
+    };
+
     while (currentNode) {
       if (signal.aborted) throw new Error('ABORTED');
       visitedNodeIds.add(currentNode.id);
@@ -297,7 +323,7 @@ export class AgentExecutionEngine {
         },
       };
 
-      await this.sleep(400, signal);
+      await this.sleep(350, signal);
 
       // WebGPU real streaming vs simulated streaming
       if (engineMode === 'webllm' && webLLMService.getStatus().isLoaded) {
@@ -335,8 +361,7 @@ export class AgentExecutionEngine {
 
           const tokensInThought = Math.ceil(thought.length / 3.5);
           totalTokens += tokensInThought;
-          const elapsedSec = (performance.now() - startTime) / 1000;
-          const currentTps = Math.round(35 + Math.random() * 30);
+          const currentTps = Math.round(38 + Math.random() * 32);
 
           yield {
             type: 'TOKEN_STREAM',
@@ -363,7 +388,7 @@ export class AgentExecutionEngine {
             },
           };
 
-          await this.sleep(350, signal);
+          await this.sleep(300, signal);
         }
       }
 
@@ -389,6 +414,17 @@ export class AgentExecutionEngine {
           };
 
           yield {
+            type: 'CONSOLE_LOG',
+            nodeId: 'sandbox',
+            consoleLog: {
+              id: `c-dom-${Date.now()}-${elem.id}`,
+              type: 'log',
+              text: `[DOM Mutation] QuerySelector resolved: "${elem.selector}" -> ${elem.tag.toUpperCase()}`,
+              timestamp: Date.now(),
+            },
+          };
+
+          yield {
             type: 'LOG_APPEND',
             nodeId: currentNode.id,
             log: {
@@ -402,7 +438,7 @@ export class AgentExecutionEngine {
             },
           };
 
-          await this.sleep(450, signal);
+          await this.sleep(400, signal);
         }
 
         // Hide virtual cursor after scraping
@@ -441,13 +477,33 @@ export class AgentExecutionEngine {
             },
           };
 
-          await this.sleep(300, signal);
+          await this.sleep(280, signal);
         }
       }
 
-      // Generate structured node payload
+      // Generate structured node payload & conversational chat statement
       const nodeOutput = persona.outputJson(goal, accumulatedPayload);
       accumulatedPayload = { ...accumulatedPayload, ...nodeOutput };
+
+      // Emit Multi-Agent Arena chat statement!
+      yield {
+        type: 'CHAT_MESSAGE',
+        nodeId: currentNode.id,
+        chatMessage: {
+          id: `chat-${Date.now()}-${nodeRole}`,
+          timestamp: Date.now(),
+          nodeId: currentNode.id,
+          agentRole: nodeRole,
+          agentName: currentNode.data.label,
+          content: persona.chatStatement(goal, accumulatedPayload),
+          toolCall: persona.tools[0] ? {
+            name: persona.tools[0].name,
+            args: persona.tools[0].args,
+            result: persona.tools[0].result(accumulatedPayload),
+          } : undefined,
+          tokens: Math.round(totalTokens),
+        },
+      };
 
       yield {
         type: 'LOG_APPEND',
@@ -519,15 +575,12 @@ export class AgentExecutionEngine {
       const outgoingEdges = edges.filter(e => e.source === currentNode.id);
 
       if (outgoingEdges.length === 0) {
-        // Terminal node reached
         break;
       }
 
       let nextNodeId: string | null = null;
 
-      // Check conditional edges
       if (outgoingEdges.length > 1) {
-        // Conditional branching router!
         let matchedEdge = null;
         for (const edge of outgoingEdges) {
           const edgeData = edge.data || {};
@@ -549,7 +602,6 @@ export class AgentExecutionEngine {
           }
         }
 
-        // If no conditional edge matched, pick fallback (else) edge or first
         if (!matchedEdge) {
           matchedEdge = outgoingEdges.find(e => e.data?.isFallback) || outgoingEdges[0];
         }
@@ -579,9 +631,8 @@ export class AgentExecutionEngine {
         nextNodeId = outgoingEdges[0].target;
       }
 
-      await this.sleep(300, signal);
+      await this.sleep(250, signal);
 
-      // Prevent infinite loops if loopback reached max iterations
       if (nextNodeId && visitedNodeIds.has(nextNodeId) && visitedNodeIds.size > 8) {
         break;
       }

@@ -7,7 +7,6 @@ import {
   BookOpen,
   FileText,
   PauseCircle,
-  PlayCircle,
   Wrench,
   CheckCircle2,
   AlertCircle,
@@ -17,9 +16,12 @@ import {
   Sliders,
   X,
   Save,
+  Copy,
+  Trash2,
 } from 'lucide-react';
 import { AgentNodeData, AgentRole, AgentStatus } from '../../types';
 import { useWorkflowStore } from '../../store/useWorkflowStore';
+import { soundEffects } from '../../services/soundFx';
 
 const ROLE_CONFIG: Record<AgentRole, {
   icon: React.ElementType;
@@ -119,6 +121,8 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
   const toggleNodeBreakpoint = useWorkflowStore((s) => s.toggleNodeBreakpoint);
   const setSelectedNodeId = useWorkflowStore((s) => s.setSelectedNodeId);
   const updateNodeData = useWorkflowStore((s) => s.updateNodeData);
+  const duplicateNode = useWorkflowStore((s) => s.duplicateNode);
+  const deleteNode = useWorkflowStore((s) => s.deleteNode);
 
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [promptEdit, setPromptEdit] = useState(data.systemPrompt || '');
@@ -135,6 +139,7 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
   const isBreakpoint = !!data.breakpointEnabled;
 
   const handleSaveConfig = () => {
+    soundEffects.playClick();
     updateNodeData(id, {
       systemPrompt: promptEdit,
       temperature: Number(tempEdit),
@@ -144,8 +149,11 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
 
   return (
     <div
-      onClick={() => setSelectedNodeId(id)}
-      className={`relative w-[330px] rounded-2xl bg-slate-900/95 backdrop-blur-2xl border transition-all duration-300 text-slate-100 shadow-2xl ${
+      onClick={() => {
+        soundEffects.playClick();
+        setSelectedNodeId(id);
+      }}
+      className={`relative w-[340px] rounded-2xl bg-slate-900/95 backdrop-blur-2xl border transition-all duration-300 text-slate-100 shadow-2xl ${
         statusInfo.cardGlowClass
       } ${selected ? 'ring-2 ring-sky-400 ring-offset-2 ring-offset-slate-950' : ''}`}
     >
@@ -196,12 +204,54 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
             </div>
           </div>
 
-          {/* Status Badge */}
+          {/* Quick Node Actions: Duplicate & Delete */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                soundEffects.playBlip();
+                duplicateNode(id);
+              }}
+              title="Duplicate Agent Node"
+              className="p-1 rounded-md text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
+            >
+              <Copy className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                soundEffects.playClick();
+                deleteNode(id);
+              }}
+              title="Delete Agent Node"
+              className="p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Status Badge */}
+        <div className="mb-3 flex items-center justify-between">
           <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border shrink-0 ${statusInfo.badgeClass}`}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border ${statusInfo.badgeClass}`}
           >
             <StatusIcon className="w-3 h-3" />
             <span>{statusInfo.label}</span>
+          </div>
+
+          {/* Telemetry pill */}
+          <div className="flex items-center gap-1 text-slate-400 font-mono text-[11px]">
+            {data.metrics && data.metrics.tokens > 0 ? (
+              <span className="text-emerald-400 font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                <Zap className="w-3 h-3 text-emerald-400" />
+                <span>{data.metrics.tokens} tok</span>
+              </span>
+            ) : (
+              <span className="text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800 text-[10px]">
+                temp: {data.temperature ?? 0.2}
+              </span>
+            )}
           </div>
         </div>
 
@@ -234,7 +284,7 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
           </div>
         )}
 
-        {/* Footer: Prominent Breakpoint Button, Config & Telemetry */}
+        {/* Footer: Prominent Breakpoint Button, Config */}
         <div className="flex items-center justify-between pt-3 border-t border-slate-800 text-xs">
           <div className="flex items-center gap-2">
             {/* Breakpoint Toggle Button */}
@@ -242,6 +292,7 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                soundEffects.playWarn();
                 toggleNodeBreakpoint(id);
               }}
               title={isBreakpoint ? 'Breakpoint Active: Will pause execution on this node' : 'Click to enable pause breakpoint'}
@@ -260,6 +311,7 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
+                soundEffects.playClick();
                 setIsConfigOpen(true);
               }}
               title="Edit Node System Prompt & Temperature"
@@ -267,20 +319,6 @@ const AgentNodeComponent = ({ id, data, selected }: NodeProps<any>) => {
             >
               <Sliders className="w-3.5 h-3.5" />
             </button>
-          </div>
-
-          {/* Telemetry pill */}
-          <div className="flex items-center gap-1 text-slate-400 font-mono text-[11px]">
-            {data.metrics && data.metrics.tokens > 0 ? (
-              <span className="text-emerald-400 font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                <Zap className="w-3 h-3 text-emerald-400" />
-                <span>{data.metrics.tokens} tok</span>
-              </span>
-            ) : (
-              <span className="text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
-                temp: {data.temperature ?? 0.2}
-              </span>
-            )}
           </div>
         </div>
 
