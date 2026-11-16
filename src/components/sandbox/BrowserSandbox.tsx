@@ -59,15 +59,15 @@ const BrowserSandboxInternal: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-950 border-t border-slate-800 select-text overflow-hidden">
-      {/* Mini-Browser Top Chrome / Address Bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800 text-xs">
-        {/* Window controls & Nav actions */}
-        <div className="flex items-center gap-3">
+    <div className="h-full flex flex-col bg-slate-50 dark:bg-[#0c0e14] border-t border-slate-200 dark:border-[#212638] select-text overflow-hidden text-xs transition-colors">
+      {/* Address Bar & Chrome */}
+      <div className="flex items-center justify-between px-3 py-2 bg-white dark:bg-[#12141c] border-b border-slate-200 dark:border-[#212638]">
+        {/* Controls */}
+        <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 mr-1">
-            <div className="w-3 h-3 rounded-full bg-rose-500/90 shadow-sm" />
-            <div className="w-3 h-3 rounded-full bg-amber-500/90 shadow-sm" />
-            <div className="w-3 h-3 rounded-full bg-emerald-500/90 shadow-sm" />
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
           </div>
 
           <button
@@ -80,25 +80,25 @@ const BrowserSandboxInternal: React.FC = () => {
               });
               setSelectedElementId(null);
             }}
-            title="Reload Sandbox DOM"
-            className="flex items-center gap-1 px-2 py-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700 transition-colors"
+            title="Reload DOM"
+            className="flex items-center gap-1 px-2 py-1 rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors"
           >
             <RotateCw className="w-3.5 h-3.5" />
             <span className="text-[11px] font-semibold">Reload</span>
           </button>
 
-          {/* Responsive Device Frame Switcher */}
-          <div className="hidden sm:flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+          {/* Viewport switcher */}
+          <div className="hidden sm:flex items-center gap-0.5 bg-slate-100 dark:bg-[#0c0e14] p-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
             <button
               onClick={() => {
                 soundEffects.playClick();
                 setDeviceFrame('desktop');
               }}
-              title="Desktop Viewport"
-              className={`p-1.5 rounded-lg transition-colors ${
+              title="Desktop (100%)"
+              className={`p-1 rounded ${
                 deviceFrame === 'desktop'
-                  ? 'bg-sky-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Monitor className="w-3.5 h-3.5" />
@@ -108,11 +108,11 @@ const BrowserSandboxInternal: React.FC = () => {
                 soundEffects.playClick();
                 setDeviceFrame('tablet');
               }}
-              title="Tablet Viewport (768px)"
-              className={`p-1.5 rounded-lg transition-colors ${
+              title="Tablet (768px)"
+              className={`p-1 rounded ${
                 deviceFrame === 'tablet'
-                  ? 'bg-sky-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Tablet className="w-3.5 h-3.5" />
@@ -122,11 +122,11 @@ const BrowserSandboxInternal: React.FC = () => {
                 soundEffects.playClick();
                 setDeviceFrame('mobile');
               }}
-              title="Mobile Viewport (390px)"
-              className={`p-1.5 rounded-lg transition-colors ${
+              title="Mobile (390px)"
+              className={`p-1 rounded ${
                 deviceFrame === 'mobile'
-                  ? 'bg-sky-500 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               <Smartphone className="w-3.5 h-3.5" />
@@ -135,42 +135,40 @@ const BrowserSandboxInternal: React.FC = () => {
         </div>
 
         {/* Address Bar */}
-        <div className="flex-1 max-w-lg mx-3 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-200 font-mono text-xs shadow-inner">
-          <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          <span className="text-slate-500 select-none">https://</span>
-          <span className="text-slate-100 truncate flex-1 font-semibold">{pageData.url.replace('https://', '')}</span>
-          <span className="text-[10px] px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300 border border-sky-500/30 uppercase font-sans font-bold">
-            MOCK DOM
+        <div className="flex-1 max-w-lg mx-3 flex items-center gap-2 px-3 py-1 rounded-lg bg-slate-100 dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-mono text-xs">
+          <Lock className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <span className="text-slate-400 select-none">https://</span>
+          <span className="truncate flex-1 font-medium">{pageData.url.replace('https://', '')}</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-sans font-bold">
+            DOM
           </span>
         </div>
 
-        {/* Page Switcher & View Mode Tabs */}
+        {/* Target Page Selector & View Tabs */}
         <div className="flex items-center gap-2">
-          {/* Target mock page dropdown */}
           <select
             value={mockPageType}
             onChange={(e) => {
               soundEffects.playClick();
               setMockPageType(e.target.value as any);
             }}
-            className="bg-slate-800 text-slate-200 text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-slate-700 outline-none hover:border-slate-600 focus:border-sky-500 font-sans cursor-pointer shadow-sm"
+            className="bg-slate-100 dark:bg-[#161923] text-slate-800 dark:text-slate-200 text-xs font-semibold px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 outline-none cursor-pointer"
           >
-            <option value="ecommerce">E-Commerce (HyperTech GPU)</option>
-            <option value="news">News Archive (Biotech Pilot)</option>
-            <option value="finance">CloudSec (Zero-Day Audit)</option>
+            <option value="ecommerce">E-Commerce</option>
+            <option value="news">News Archive</option>
+            <option value="finance">CloudSec CVE</option>
           </select>
 
-          {/* View tabs */}
-          <div className="flex items-center p-1 rounded-xl bg-slate-800/90 border border-slate-700 text-xs">
+          <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-[#161923] border border-slate-200 dark:border-slate-800 text-xs font-medium">
             <button
               onClick={() => {
                 soundEffects.playClick();
                 setActiveTab('preview');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all font-semibold ${
+              className={`flex items-center gap-1 px-2 py-1 rounded ${
                 activeTab === 'preview'
-                  ? 'bg-sky-500 text-white shadow-sm font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -181,97 +179,92 @@ const BrowserSandboxInternal: React.FC = () => {
                 soundEffects.playClick();
                 setActiveTab('dom');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all font-semibold ${
+              className={`flex items-center gap-1 px-2 py-1 rounded ${
                 activeTab === 'dom'
-                  ? 'bg-sky-500 text-white shadow-sm font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
               <Code2 className="w-3.5 h-3.5" />
-              <span>DOM Tree</span>
+              <span>DOM</span>
             </button>
             <button
               onClick={() => {
                 soundEffects.playClick();
                 setActiveTab('extracted');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all font-semibold ${
+              className={`flex items-center gap-1 px-2 py-1 rounded ${
                 activeTab === 'extracted'
-                  ? 'bg-sky-500 text-white shadow-sm font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
               <FileJson className="w-3.5 h-3.5" />
-              <span>Extracted</span>
+              <span>Schema</span>
             </button>
             <button
               onClick={() => {
                 soundEffects.playClick();
                 setActiveTab('console');
               }}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all font-semibold ${
+              className={`flex items-center gap-1 px-2 py-1 rounded ${
                 activeTab === 'console'
-                  ? 'bg-sky-500 text-white shadow-sm font-bold'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
               <Terminal className="w-3.5 h-3.5" />
-              <span>Console ({consoleLogs.length})</span>
+              <span>Console</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Sandbox View Area */}
-      <div className="relative flex-1 bg-slate-950 overflow-auto flex flex-col items-center">
-        {/* Tab 1: Rendered Interactive Mock Page with Device Scaling */}
+      {/* Main View Area */}
+      <div className="relative flex-1 overflow-auto flex flex-col items-center">
+        {/* Tab 1: Rendered Page */}
         {activeTab === 'preview' && (
           <div
             className={`w-full relative transition-all duration-300 py-6 px-4 flex justify-center ${
               deviceFrame === 'mobile'
                 ? 'max-w-[420px]'
                 : deviceFrame === 'tablet'
-                ? 'max-w-[800px]'
-                : 'max-w-5xl'
+                ? 'max-w-[768px]'
+                : 'max-w-4xl'
             }`}
           >
-            {/* Virtual Cursor Animation (When Scraper Agent is executing) */}
+            {/* Virtual Cursor */}
             {cursor.visible && (
               <div
                 className="absolute z-40 transition-all duration-300 pointer-events-none ease-out"
                 style={{ top: `${cursor.y}px`, left: `${cursor.x}px` }}
               >
                 <div className="relative">
-                  <MousePointer2 className="w-6 h-6 text-purple-400 fill-purple-500 drop-shadow-[0_0_12px_rgba(168,85,247,0.9)] animate-pulse" />
-                  <div className="absolute left-5 top-2 px-2.5 py-1 rounded-lg bg-purple-600 text-white text-xs font-mono font-bold whitespace-nowrap shadow-xl border border-purple-300 backdrop-blur-md flex items-center gap-1.5">
-                    <Sparkles className="w-3 h-3 text-yellow-300 animate-spin" />
-                    <span>Scraper Cursor [Extracting...]</span>
+                  <MousePointer2 className="w-5 h-5 text-indigo-600 fill-indigo-600" />
+                  <div className="absolute left-4 top-1 px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-mono font-bold whitespace-nowrap shadow-md">
+                    Scraper Cursor
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Target Webpage Content Container */}
+            {/* Rendered Container */}
             <div
-              className={`w-full rounded-2xl bg-slate-900 border p-6 shadow-2xl relative transition-all ${
-                deviceFrame === 'mobile'
-                  ? 'border-purple-500/50 shadow-[0_0_30px_rgba(168,85,247,0.2)] rounded-3xl'
-                  : 'border-slate-800'
+              className={`w-full rounded-xl bg-white dark:bg-[#151822] border border-slate-200 dark:border-slate-800 p-5 shadow-sm transition-all ${
+                deviceFrame === 'mobile' ? 'rounded-2xl border-slate-300 dark:border-slate-700 shadow-md' : ''
               }`}
             >
-              {/* Target Header */}
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-800 text-xs text-slate-300">
-                <span className="flex items-center gap-2 font-bold text-slate-100 text-sm">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 dark:border-slate-800 text-xs">
+                <span className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-100 text-sm">
                   <span>{pageData.favicon}</span>
                   <span>{pageData.title}</span>
                 </span>
-                <span className="text-[11px] font-mono font-semibold text-slate-400 bg-slate-950 px-2 py-0.5 rounded-md border border-slate-800">
-                  DOM Count: {pageData.elements.length} Nodes
+                <span className="text-[11px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                  {pageData.elements.length} Elements
                 </span>
               </div>
 
-              {/* Interactive Mock Elements with Neon Highlight State */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {pageData.elements.map((elem) => {
                   const isHighlighted = highlightedId === elem.id;
 
@@ -279,32 +272,26 @@ const BrowserSandboxInternal: React.FC = () => {
                     <div
                       key={elem.id}
                       onClick={() => handleElementClick(elem)}
-                      className={`relative group cursor-pointer p-3.5 rounded-xl border transition-all duration-200 ${
+                      className={`relative group cursor-pointer p-3 rounded-lg border transition-all ${
                         isHighlighted
-                          ? 'bg-purple-950/40 border-purple-400 shadow-[0_0_25px_rgba(168,85,247,0.4)] ring-2 ring-purple-400'
-                          : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-950/80'
+                          ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-500 ring-1 ring-blue-500'
+                          : 'bg-slate-50/50 dark:bg-[#0c0e14] border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                       }`}
                     >
-                      {/* Element Inspector Tag Badge */}
-                      <div className="flex items-center justify-between mb-2 text-xs font-mono">
-                        <span className="flex items-center gap-1.5 text-slate-300 font-semibold truncate">
-                          <span className="text-purple-400">{`<${elem.tag}>`}</span>
-                          <span className="text-sky-300">{elem.selector}</span>
-                          <span className="text-slate-500 font-sans">({elem.label})</span>
+                      <div className="flex items-center justify-between mb-1.5 text-xs font-mono">
+                        <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-semibold truncate">
+                          <span className="text-indigo-600 dark:text-indigo-400">{`<${elem.tag}>`}</span>
+                          <span className="text-blue-600 dark:text-blue-400">{elem.selector}</span>
+                          <span className="text-slate-400 font-sans">({elem.label})</span>
                         </span>
-                        {isHighlighted ? (
-                          <span className="px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 border border-purple-400 animate-pulse text-[10px] font-bold shrink-0">
+                        {isHighlighted && (
+                          <span className="px-1.5 py-0.2 rounded bg-blue-600 text-white text-[9px] font-bold">
                             TARGETED
-                          </span>
-                        ) : (
-                          <span className="opacity-0 group-hover:opacity-100 text-[10px] text-sky-400 font-sans transition-opacity shrink-0">
-                            Click to Inspect
                           </span>
                         )}
                       </div>
 
-                      {/* Element Content */}
-                      <div className="text-xs text-slate-100 font-sans leading-relaxed">
+                      <div className="text-xs text-slate-800 dark:text-slate-200 font-sans leading-relaxed">
                         {elem.text}
                       </div>
                     </div>
@@ -315,30 +302,30 @@ const BrowserSandboxInternal: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 2: DOM Tree & Selector Inspector */}
+        {/* Tab 2: DOM Tree */}
         {activeTab === 'dom' && (
-          <div className="w-full p-5 font-mono text-xs max-w-4xl mx-auto space-y-3.5">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-300 text-xs">
+          <div className="w-full p-4 font-mono text-xs max-w-4xl mx-auto space-y-2">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
               <span className="font-bold">DOM Hierarchy Tree</span>
-              <span className="text-slate-400">Click any element to inspect & copy CSS selector</span>
+              <span>Click element to copy selector</span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {pageData.elements.map((elem) => (
                 <div
                   key={elem.id}
                   onClick={() => handleElementClick(elem)}
-                  className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between shadow-sm ${
+                  className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-center justify-between ${
                     highlightedId === elem.id
-                      ? 'bg-sky-950/50 border-sky-400 text-sky-100 shadow-[0_0_15px_rgba(56,189,248,0.3)] ring-1 ring-sky-400'
-                      : 'bg-slate-900/60 border-slate-800 text-slate-200 hover:border-slate-700'
+                      ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500 text-blue-900 dark:text-blue-100 ring-1 ring-blue-500'
+                      : 'bg-white dark:bg-[#151822] border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
-                  <div className="flex items-center gap-2.5 truncate mr-3">
-                    <ChevronRight className="w-4 h-4 text-slate-500 shrink-0" />
-                    <span className="text-purple-400 font-bold">{elem.tag}</span>
-                    <span className="text-sky-300 font-bold">{elem.selector}</span>
-                    <span className="text-slate-400 truncate max-w-sm text-xs">
+                  <div className="flex items-center gap-2 truncate mr-2">
+                    <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span className="text-indigo-600 dark:text-indigo-400 font-bold">{elem.tag}</span>
+                    <span className="text-blue-600 dark:text-blue-400 font-bold">{elem.selector}</span>
+                    <span className="text-slate-500 truncate max-w-sm text-xs font-sans">
                       "{elem.text.slice(0, 50)}..."
                     </span>
                   </div>
@@ -348,84 +335,51 @@ const BrowserSandboxInternal: React.FC = () => {
                       e.stopPropagation();
                       handleCopy(elem.selector);
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors shrink-0"
+                    className="flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0 text-[11px]"
                     title="Copy Selector"
                   >
                     {copiedSelector === elem.selector ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <Check className="w-3 h-3 text-emerald-600" />
                     ) : (
-                      <Copy className="w-3.5 h-3.5" />
+                      <Copy className="w-3 h-3" />
                     )}
-                    <span className="text-[10px] font-sans font-semibold">
-                      {copiedSelector === elem.selector ? 'Copied' : 'Copy'}
-                    </span>
+                    <span>{copiedSelector === elem.selector ? 'Copied' : 'Copy'}</span>
                   </button>
                 </div>
               ))}
             </div>
-
-            {/* Selected Element Detail Box */}
-            {selectedElementId && (
-              <div className="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 shadow-xl">
-                <div className="text-xs font-bold text-slate-100 mb-2 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-sky-400" />
-                  <span>Inspected Element Attributes</span>
-                </div>
-                {(() => {
-                  const elem = pageData.elements.find((e) => e.id === selectedElementId);
-                  if (!elem) return null;
-                  return (
-                    <div className="space-y-1.5 text-xs font-mono">
-                      <div>
-                        <span className="text-slate-400 font-semibold">Selector:</span>{' '}
-                        <span className="text-sky-300 font-bold">{elem.selector}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-400 font-semibold">Parsed Value:</span>{' '}
-                        <span className="text-emerald-400 font-bold">
-                          {typeof elem.dataValue === 'object'
-                            ? JSON.stringify(elem.dataValue)
-                            : String(elem.dataValue)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
           </div>
         )}
 
-        {/* Tab 3: Extracted Scraper Output JSON */}
+        {/* Tab 3: Extracted */}
         {activeTab === 'extracted' && (
-          <div className="w-full p-5 font-mono text-xs max-w-4xl mx-auto">
-            <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-800 text-slate-300 text-xs">
-              <span className="font-bold">Extracted Structured Schema</span>
+          <div className="w-full p-4 font-mono text-xs max-w-4xl mx-auto">
+            <div className="flex items-center justify-between pb-2 mb-3 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
+              <span className="font-bold">Extracted Schema</span>
               <button
                 onClick={() =>
                   handleCopy(
                     JSON.stringify(
-                      pageData.elements.map((e) => ({
-                        selector: e.selector,
-                        value: e.dataValue,
-                      })),
+                      pageData.elements.reduce((acc, cur) => {
+                        acc[cur.selector] = cur.dataValue;
+                        return acc;
+                      }, {} as Record<string, any>),
                       null,
                       2
                     )
                   )
                 }
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-white font-sans font-bold transition-all shadow-sm"
+                className="flex items-center gap-1 px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-sans font-bold"
               >
                 <Copy className="w-3.5 h-3.5" />
-                <span>Copy Extracted JSON</span>
+                <span>Copy JSON</span>
               </button>
             </div>
 
-            <pre className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 overflow-x-auto text-xs leading-relaxed shadow-inner">
+            <pre className="p-3.5 rounded-lg bg-white dark:bg-[#151822] border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-emerald-400 overflow-x-auto text-xs leading-relaxed">
               {JSON.stringify(
                 {
                   domain: pageData.url,
-                  extractedAt: new Date().toISOString(),
                   dataset: pageData.elements.reduce((acc, cur) => {
                     acc[cur.selector] = cur.dataValue;
                     return acc;
@@ -438,32 +392,32 @@ const BrowserSandboxInternal: React.FC = () => {
           </div>
         )}
 
-        {/* Tab 4: Browser Console Simulator */}
+        {/* Tab 4: Console */}
         {activeTab === 'console' && (
-          <div className="w-full p-5 font-mono text-xs max-w-4xl mx-auto space-y-2">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-slate-300 text-xs">
+          <div className="w-full p-4 font-mono text-xs max-w-4xl mx-auto space-y-2">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400">
               <span className="font-bold flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-sky-400" />
-                <span>Simulated DevTools Console</span>
+                <Terminal className="w-4 h-4 text-blue-600" />
+                <span>Browser Console Output</span>
               </span>
-              <span className="text-slate-400 text-[11px]">{consoleLogs.length} events logged</span>
+              <span>{consoleLogs.length} events</span>
             </div>
 
             {consoleLogs.length === 0 ? (
-              <div className="p-8 text-center text-slate-500 text-xs">
-                No console messages recorded. Run a workflow to observe DOM mutation events.
+              <div className="p-8 text-center text-slate-400 text-xs">
+                No console messages recorded.
               </div>
             ) : (
               <div className="space-y-1.5">
                 {consoleLogs.map((log) => {
                   let Icon = Info;
-                  let colorClass = 'text-slate-300 border-slate-800 bg-slate-900/60';
+                  let colorClass = 'text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 bg-white dark:bg-[#151822]';
                   if (log.type === 'warn') {
                     Icon = AlertTriangle;
-                    colorClass = 'text-yellow-300 border-yellow-700/50 bg-yellow-950/20';
+                    colorClass = 'text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20';
                   } else if (log.type === 'error') {
                     Icon = AlertCircle;
-                    colorClass = 'text-rose-300 border-rose-700/50 bg-rose-950/20';
+                    colorClass = 'text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/20';
                   }
 
                   return (
@@ -473,7 +427,7 @@ const BrowserSandboxInternal: React.FC = () => {
                     >
                       <Icon className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                       <div className="flex-1 break-words">{log.text}</div>
-                      <span className="text-[10px] text-slate-500 shrink-0">
+                      <span className="text-[10px] text-slate-400 shrink-0">
                         {new Date(log.timestamp).toLocaleTimeString()}
                       </span>
                     </div>

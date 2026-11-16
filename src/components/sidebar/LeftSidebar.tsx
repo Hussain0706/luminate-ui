@@ -5,19 +5,19 @@ import {
   ShieldCheck,
   BookOpen,
   FileText,
-  Sparkles,
-  Cpu,
   Layers,
   Plus,
   Play,
-  Zap,
   CheckCircle2,
   Sliders,
-  Flame,
+  ChevronLeft,
+  ChevronRight,
+  Workflow,
 } from 'lucide-react';
 import { AgentRole } from '../../types';
 import { useWorkflowStore } from '../../store/useWorkflowStore';
 import { WORKFLOW_TEMPLATES } from '../../constants/templates';
+import { soundEffects } from '../../services/soundFx';
 
 const AGENT_CATALOG: {
   role: AgentRole;
@@ -25,222 +25,141 @@ const AGENT_CATALOG: {
   roleTag: string;
   desc: string;
   icon: React.ElementType;
-  colorClass: string;
-  badgeBg: string;
-  borderClass: string;
-  btnClass: string;
+  badgeClass: string;
 }[] = [
   {
     role: 'supervisor',
     title: 'Supervisor Agent',
     roleTag: 'COORDINATOR',
-    desc: 'Orchestrates the graph and delegates tasks.',
+    desc: 'Orchestrates the graph, decomposes goals, and delegates subtasks.',
     icon: Compass,
-    colorClass: 'text-sky-400',
-    badgeBg: 'bg-sky-500/15',
-    borderClass: 'border-sky-500/30 hover:border-sky-400',
-    btnClass: 'bg-sky-500/20 hover:bg-sky-500 text-sky-300 hover:text-white border border-sky-500/40',
+    badgeClass: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-900',
   },
   {
     role: 'scraper',
     title: 'Web Scraper Agent',
-    roleTag: 'BROWSER DOM',
-    desc: 'Extracts real-time DOM elements & attributes.',
+    roleTag: 'DOM EXTRACTOR',
+    desc: 'Extracts real-time DOM elements, pricing data, and attributes.',
     icon: Globe,
-    colorClass: 'text-purple-400',
-    badgeBg: 'bg-purple-500/15',
-    borderClass: 'border-purple-500/30 hover:border-purple-400',
-    btnClass: 'bg-purple-500/20 hover:bg-purple-500 text-purple-300 hover:text-white border border-purple-500/40',
+    badgeClass: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900',
   },
   {
     role: 'router',
     title: 'Router / Guardrail',
     roleTag: 'IF / ELSE LOGIC',
-    desc: 'Validates confidence & conditional branches.',
+    desc: 'Validates confidence scores and directs conditional branches.',
     icon: ShieldCheck,
-    colorClass: 'text-amber-400',
-    badgeBg: 'bg-amber-500/15',
-    borderClass: 'border-amber-500/30 hover:border-amber-400',
-    btnClass: 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-white border border-amber-500/40',
+    badgeClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-900',
   },
   {
     role: 'researcher',
     title: 'Fact Researcher',
-    roleTag: 'DATA ENRICHMENT',
-    desc: 'Queries archives and validates prior context.',
+    roleTag: 'ENRICHMENT',
+    desc: 'Queries archives and validates prior context against sources.',
     icon: BookOpen,
-    colorClass: 'text-emerald-400',
-    badgeBg: 'bg-emerald-500/15',
-    borderClass: 'border-emerald-500/30 hover:border-emerald-400',
-    btnClass: 'bg-emerald-500/20 hover:bg-emerald-500 text-emerald-300 hover:text-white border border-emerald-500/40',
+    badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
   },
   {
     role: 'writer',
     title: 'Summary Writer',
     roleTag: 'SYNTHESIS',
-    desc: 'Produces executive memos and markdown dossiers.',
+    desc: 'Produces structured executive memos and markdown dossiers.',
     icon: FileText,
-    colorClass: 'text-rose-400',
-    badgeBg: 'bg-rose-500/15',
-    borderClass: 'border-rose-500/30 hover:border-rose-400',
-    btnClass: 'bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white border border-rose-500/40',
+    badgeClass: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200 dark:border-purple-900',
   },
 ];
 
 export const LeftSidebar: React.FC = () => {
   const addAgentNode = useWorkflowStore((s) => s.addAgentNode);
   const loadTemplate = useWorkflowStore((s) => s.loadTemplate);
-  const engineMode = useWorkflowStore((s) => s.engineMode);
-  const setEngineMode = useWorkflowStore((s) => s.setEngineMode);
-  const setWebLLMModalOpen = useWorkflowStore((s) => s.setWebLLMModalOpen);
+  const isLeftSidebarOpen = useWorkflowStore((s) => s.isLeftSidebarOpen);
+  const toggleLeftSidebar = useWorkflowStore((s) => s.toggleLeftSidebar);
+
+  if (!isLeftSidebarOpen) {
+    return (
+      <div className="w-12 h-full bg-white dark:bg-[#12141c] border-r border-slate-200 dark:border-[#212638] flex flex-col items-center py-3 select-none">
+        <button
+          onClick={() => {
+            soundEffects.playClick();
+            toggleLeftSidebar();
+          }}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="Expand Agent Hub & Templates"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <aside className="w-80 h-full flex flex-col bg-slate-900 border-r border-slate-800 select-none overflow-y-auto">
-      {/* Brand Header */}
-      <div className="p-4 border-b border-slate-800 bg-slate-950/40">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-purple-600 flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.4)]">
-            <Sparkles className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="text-base font-extrabold tracking-tight text-white">
-                Luminate UI
-              </h1>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30 font-bold">
-                v1.0
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 font-medium">
-              Multi-Agent Workflow Playground
-            </p>
-          </div>
+    <aside className="w-72 h-full flex flex-col bg-white dark:bg-[#12141c] border-r border-slate-200 dark:border-[#212638] select-none overflow-y-auto text-xs transition-all">
+      {/* Sidebar Header */}
+      <div className="p-3.5 border-b border-slate-200 dark:border-[#212638] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Workflow className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span className="font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider text-[11px] font-mono">
+            Component Library
+          </span>
         </div>
-
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-emerald-400 font-mono bg-emerald-500/10 px-2.5 py-1.5 rounded-lg border border-emerald-500/20">
-          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-          <span>100% Free Client-Side • No API Keys</span>
-        </div>
+        <button
+          onClick={() => {
+            soundEffects.playClick();
+            toggleLeftSidebar();
+          }}
+          className="p-1 rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          title="Collapse Sidebar"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
       </div>
 
-      <div className="p-4 space-y-6 flex-1">
-        {/* Execution Engine Selector */}
-        <div>
-          <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-2.5">
-            <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-slate-400 font-mono">
-              <Cpu className="w-3.5 h-3.5 text-sky-400" />
-              <span>Execution Engine</span>
+      <div className="p-3.5 space-y-5 flex-1">
+        {/* Section 1: Agent Nodes Catalog */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-semibold uppercase text-slate-500 dark:text-slate-400">
+              Agent Roles ({AGENT_CATALOG.length})
             </span>
           </div>
 
           <div className="space-y-2">
-            {/* Mode 1: Simulated Agent Engine */}
-            <div
-              onClick={() => setEngineMode('simulated')}
-              className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                engineMode === 'simulated'
-                  ? 'bg-sky-500/15 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.25)] ring-1 ring-sky-400/50'
-                  : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-xs text-slate-100 flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-amber-400" />
-                  <span>Simulated Engine</span>
-                </span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  INSTANT
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Zero download. Simulates multi-agent reasoning, high-speed token generation, and DOM scraping.
-              </p>
-            </div>
-
-            {/* Mode 2: Real Browser AI (WebGPU) */}
-            <div
-              onClick={() => {
-                setEngineMode('webllm');
-                setWebLLMModalOpen(true);
-              }}
-              className={`p-3 rounded-xl border transition-all cursor-pointer ${
-                engineMode === 'webllm'
-                  ? 'bg-purple-500/15 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.25)] ring-1 ring-purple-400/50'
-                  : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-xs text-slate-100 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-purple-400" />
-                  <span>Local WebGPU AI</span>
-                </span>
-                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  FREE LOCAL
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
-                Runs Qwen2.5/SmolLM2 locally on your GPU via `@mlc-ai/web-llm`.
-              </p>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setWebLLMModalOpen(true);
-                }}
-                className="w-full py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 text-[10px] font-mono font-semibold flex items-center justify-center gap-1 transition-colors"
-              >
-                <Sliders className="w-3 h-3" />
-                <span>Configure Model & Cache</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Agent Hub: Add Node Section */}
-        <div>
-          <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-2.5">
-            <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-slate-400 font-mono">
-              <Layers className="w-3.5 h-3.5 text-sky-400" />
-              <span>Agent Hub (Add Node)</span>
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono bg-slate-800 px-1.5 py-0.5 rounded">5 Roles</span>
-          </div>
-
-          <div className="space-y-2.5">
             {AGENT_CATALOG.map((item) => {
               const Icon = item.icon;
               return (
                 <div
                   key={item.role}
-                  className={`p-3 rounded-xl bg-slate-950/80 border ${item.borderClass} transition-all space-y-2 shadow-sm`}
+                  className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/60 dark:bg-[#161923] hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-1.5"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-1.5 rounded-lg ${item.badgeBg}`}>
-                        <Icon className={`w-4 h-4 ${item.colorClass}`} />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`p-1.5 rounded-lg border ${item.badgeClass}`}>
+                        <Icon className="w-3.5 h-3.5" />
                       </div>
-                      <div>
-                        <h4 className="text-xs font-bold text-slate-100">
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                           {item.title}
-                        </h4>
-                        <span className="text-[9px] font-mono text-slate-400 uppercase font-semibold">
+                        </div>
+                        <span className="text-[9px] font-mono text-slate-500 uppercase">
                           {item.roleTag}
                         </span>
                       </div>
                     </div>
 
-                    {/* Dedicated "+ Add Node" button */}
                     <button
                       type="button"
-                      onClick={() => addAgentNode(item.role)}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all shadow-sm active:scale-95 ${item.btnClass}`}
+                      onClick={() => {
+                        soundEffects.playBlip();
+                        addAgentNode(item.role);
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-900 transition-all active:scale-95"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-3 h-3" />
                       <span>Add</span>
                     </button>
                   </div>
 
-                  <p className="text-[11px] text-slate-400 leading-snug">
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
                     {item.desc}
                   </p>
                 </div>
@@ -249,41 +168,43 @@ export const LeftSidebar: React.FC = () => {
           </div>
         </div>
 
-        {/* Preset Workflow Templates */}
-        <div>
-          <div className="flex items-center justify-between text-xs font-bold text-slate-200 mb-2.5">
-            <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] text-slate-400 font-mono">
-              <Play className="w-3.5 h-3.5 text-purple-400" />
-              <span>Preset Templates</span>
+        {/* Section 2: Preset Workflow Templates */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-mono font-semibold uppercase text-slate-500 dark:text-slate-400">
+              Preset Templates ({WORKFLOW_TEMPLATES.length})
             </span>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {WORKFLOW_TEMPLATES.map((tmpl) => (
               <div
                 key={tmpl.id}
-                className="p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-purple-500/50 transition-all space-y-2 shadow-sm"
+                className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50/60 dark:bg-[#161923] hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-1.5"
               >
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-slate-100">
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate mr-1">
                     {tmpl.name}
                   </h4>
-                  <span className="text-[10px] font-mono text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded-full border border-purple-500/30 font-bold">
-                    {tmpl.nodes.length} Nodes
+                  <span className="text-[10px] font-mono text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 rounded border border-slate-200 dark:border-slate-700 shrink-0">
+                    {tmpl.nodes.length} nodes
                   </span>
                 </div>
 
-                <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
                   {tmpl.description}
                 </p>
 
                 <button
                   type="button"
-                  onClick={() => loadTemplate(tmpl.id)}
-                  className="w-full py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600 text-purple-300 hover:text-white border border-purple-500/40 text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    loadTemplate(tmpl.id);
+                  }}
+                  className="w-full py-1.5 rounded-lg bg-slate-200/80 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 border border-slate-300/80 dark:border-slate-700"
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" />
-                  <span>Load Template</span>
+                  <Play className="w-3 h-3 fill-current" />
+                  <span>Load Preset</span>
                 </button>
               </div>
             ))}
@@ -292,9 +213,9 @@ export const LeftSidebar: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="p-3 border-t border-slate-800 bg-slate-950 text-xs text-slate-400 font-mono flex items-center justify-between">
-        <span>React 19 • React Flow</span>
-        <span className="text-emerald-400 font-bold">Zero Backend</span>
+      <div className="p-3 border-t border-slate-200 dark:border-[#212638] bg-slate-50/50 dark:bg-[#10121a] text-[11px] font-mono text-slate-500 flex items-center justify-between">
+        <span>Client-Side Engine</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-bold">100% Free</span>
       </div>
     </aside>
   );

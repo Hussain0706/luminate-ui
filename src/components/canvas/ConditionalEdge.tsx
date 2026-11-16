@@ -20,7 +20,6 @@ const ConditionalEdgeComponent = ({
   style = {},
   data,
   markerEnd,
-  selected,
 }: EdgeProps<any>) => {
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -31,29 +30,28 @@ const ConditionalEdgeComponent = ({
     targetPosition,
   });
 
-  const setActiveEdgeModalId = useWorkflowStore((s) => (s as any).setActiveEdgeModalId);
+  const setActiveEdgeModalId = useWorkflowStore((s) => s.setActiveEdgeModalId);
+  const theme = useWorkflowStore((s) => s.theme);
 
   const status = data?.status || 'idle';
   const label = data?.label || '';
   const isFallback = !!data?.isFallback;
 
-  // Determine edge color and glow based on status
-  let strokeColor = '#334155'; // default slate-700
+  // Determine edge color based on status and theme
+  const isDark = theme === 'dark';
+  let strokeColor = isDark ? '#334155' : '#cbd5e1';
   let strokeWidth = 2;
   let isDashed = false;
-  let glowFilter = '';
 
   if (status === 'active') {
-    strokeColor = '#38bdf8'; // sky
+    strokeColor = '#2563eb'; // blue-600
     strokeWidth = 3;
     isDashed = true;
-    glowFilter = 'drop-shadow(0 0 8px rgba(56, 189, 248, 0.9))';
   } else if (status === 'passed') {
-    strokeColor = '#10b981'; // emerald
+    strokeColor = '#059669'; // emerald-600
     strokeWidth = 2.5;
-    glowFilter = 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.7))';
   } else if (status === 'skipped') {
-    strokeColor = '#1e293b'; // dim
+    strokeColor = isDark ? '#1e293b' : '#e2e8f0';
     strokeWidth = 1.5;
     isDashed = true;
   }
@@ -76,15 +74,14 @@ const ConditionalEdgeComponent = ({
           ...style,
           stroke: strokeColor,
           strokeWidth,
-          strokeDasharray: isDashed ? '6,6' : undefined,
-          filter: glowFilter,
-          transition: 'all 0.3s ease',
+          strokeDasharray: isDashed ? '5,5' : undefined,
+          transition: 'stroke 0.3s ease, stroke-width 0.2s ease',
         }}
       />
 
-      {/* Animated glowing particle packet traveling along edge when active */}
+      {/* Animated particle pulse traveling along active edge */}
       {status === 'active' && (
-        <circle r="4" fill="#38bdf8" filter="drop-shadow(0 0 6px #38bdf8)">
+        <circle r="3.5" fill="#2563eb">
           <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
         </circle>
       )}
@@ -103,26 +100,26 @@ const ConditionalEdgeComponent = ({
               type="button"
               onClick={handleEdgeClick}
               title="Click to edit condition logic"
-              className={`group flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border backdrop-blur-md transition-all duration-300 shadow-md active:scale-95 cursor-pointer ${
+              className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-medium border shadow-sm transition-all duration-150 cursor-pointer ${
                 status === 'active'
-                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.6)] animate-pulse'
+                  ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300 border-blue-400 font-bold'
                   : status === 'passed'
-                  ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                  ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-400 font-bold'
                   : status === 'skipped'
-                  ? 'bg-slate-900/80 text-slate-500 border-slate-800 opacity-60'
+                  ? 'bg-slate-100 text-slate-400 dark:bg-slate-900/80 dark:text-slate-500 border-slate-200 dark:border-slate-800 opacity-60'
                   : isFallback
-                  ? 'bg-slate-900/90 text-purple-300 border-purple-500/50 hover:border-purple-400 hover:bg-slate-800'
-                  : 'bg-slate-900/95 text-slate-200 border-slate-700 hover:border-sky-400 hover:bg-slate-800'
+                  ? 'bg-white text-indigo-700 dark:bg-slate-900 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:border-indigo-400'
+                  : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-blue-500'
               }`}
             >
               {isFallback ? (
-                <CornerDownRight className="w-3 h-3 text-purple-400" />
+                <CornerDownRight className="w-3 h-3 text-indigo-500" />
               ) : (
-                <GitBranch className="w-3 h-3 text-sky-400" />
+                <GitBranch className="w-3 h-3 text-blue-500" />
               )}
               <span>{label}</span>
-              {status === 'passed' && <Check className="w-3 h-3 text-emerald-400" />}
-              <Sliders className="w-2.5 h-2.5 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
+              {status === 'passed' && <Check className="w-3 h-3 text-emerald-600" />}
+              <Sliders className="w-2.5 h-2.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ml-0.5" />
             </button>
           </div>
         </EdgeLabelRenderer>

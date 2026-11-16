@@ -53,6 +53,10 @@ interface WorkflowStore {
   timeTravelIndex: number | null; // null = live edge
 
   // UI state
+  theme: 'light' | 'dark';
+  viewMode: 'canvas' | 'split' | 'sandbox';
+  isMiniMapVisible: boolean;
+  isLeftSidebarOpen: boolean;
   activeTab: 'logs' | 'chat' | 'payload' | 'analytics';
   isWebLLMModalOpen: boolean;
   isExportModalOpen: boolean;
@@ -62,6 +66,11 @@ interface WorkflowStore {
   activeEdgeModalId: string | null;
 
   // Actions
+  toggleTheme: () => void;
+  setTheme: (theme: 'light' | 'dark') => void;
+  setViewMode: (mode: 'canvas' | 'split' | 'sandbox') => void;
+  toggleMiniMap: () => void;
+  toggleLeftSidebar: () => void;
   setNodes: (nodes: Node<AgentNodeData>[]) => void;
   setEdges: (edges: Edge[]) => void;
   onNodesChange: OnNodesChange;
@@ -114,6 +123,33 @@ const DEFAULT_METRICS: WorkflowMetrics = {
 
 const initialTemplate = WORKFLOW_TEMPLATES[0];
 
+const getStoredTheme = (): 'light' | 'dark' => {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('luminate-theme') as 'light' | 'dark' | null;
+    if (saved === 'light' || saved === 'dark') return saved;
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+      return 'light';
+    }
+  }
+  return 'dark';
+};
+
+const applyDocumentTheme = (theme: 'light' | 'dark') => {
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    } else {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    }
+  }
+};
+
+const initialTheme = getStoredTheme();
+applyDocumentTheme(initialTheme);
+
 export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   nodes: initialTemplate.nodes,
   edges: initialTemplate.edges,
@@ -165,12 +201,38 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   timeTravelIndex: null,
 
   activeTab: 'logs',
+  theme: initialTheme,
+  viewMode: 'canvas',
+  isMiniMapVisible: true,
+  isLeftSidebarOpen: true,
   isWebLLMModalOpen: false,
   isExportModalOpen: false,
   isImportModalOpen: false,
   isApprovalModalOpen: false,
   isCommandPaletteOpen: false,
   activeEdgeModalId: null,
+
+  toggleTheme: () => {
+    const next = get().theme === 'dark' ? 'light' : 'dark';
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('luminate-theme', next);
+    }
+    applyDocumentTheme(next);
+    soundEffects.playClick();
+    set({ theme: next });
+  },
+
+  setTheme: (theme) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('luminate-theme', theme);
+    }
+    applyDocumentTheme(theme);
+    set({ theme });
+  },
+
+  setViewMode: (viewMode) => set({ viewMode }),
+  toggleMiniMap: () => set((state) => ({ isMiniMapVisible: !state.isMiniMapVisible })),
+  toggleLeftSidebar: () => set((state) => ({ isLeftSidebarOpen: !state.isLeftSidebarOpen })),
 
   setNodes: (nodes) => set({ nodes }),
   setEdges: (edges) => set({ edges }),

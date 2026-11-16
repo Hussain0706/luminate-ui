@@ -18,19 +18,16 @@ import {
   Sparkles,
   MessageSquare,
   Shield,
-  Layers,
   ChevronLeft,
   ChevronRight,
   DollarSign,
-  Cpu,
-  Lock,
   Wrench,
 } from 'lucide-react';
 import { useWorkflowStore } from '../../store/useWorkflowStore';
 import { agentEngine } from '../../services/agentEngine';
 import { JsonInspector } from '../inspector/JsonInspector';
 import { WorkflowAction, WorkflowMachineState } from '../../reducers/workflowReducer';
-import { LogLevel, AgentRole } from '../../types';
+import { AgentRole } from '../../types';
 import { soundEffects } from '../../services/soundFx';
 
 interface RightSidebarProps {
@@ -38,12 +35,12 @@ interface RightSidebarProps {
   dispatchWorkflow: React.Dispatch<WorkflowAction>;
 }
 
-const ROLE_AVATAR_CONFIG: Record<AgentRole, { bg: string; text: string; border: string }> = {
-  supervisor: { bg: 'bg-sky-500/20', text: 'text-sky-300', border: 'border-sky-500/40' },
-  scraper: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/40' },
-  router: { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/40' },
-  researcher: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/40' },
-  writer: { bg: 'bg-rose-500/20', text: 'text-rose-300', border: 'border-rose-500/40' },
+const ROLE_AVATAR_CONFIG: Record<AgentRole, { badge: string; text: string }> = {
+  supervisor: { badge: 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800', text: 'Supervisor' },
+  scraper: { badge: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800', text: 'Scraper' },
+  router: { badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800', text: 'Router' },
+  researcher: { badge: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800', text: 'Researcher' },
+  writer: { badge: 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 border-purple-200 dark:border-purple-800', text: 'Writer' },
 };
 
 export const RightSidebar: React.FC<RightSidebarProps> = ({
@@ -217,10 +214,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               soundEffects.playSuccess();
               dispatchWorkflow({ type: 'COMPLETE', result: event.payload });
               confetti({
-                particleCount: 120,
+                particleCount: 100,
                 spread: 70,
                 origin: { y: 0.6 },
-                colors: ['#38bdf8', '#a855f7', '#10b981', '#f59e0b'],
               });
               break;
           }
@@ -279,40 +275,40 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   const claudeCost = ((tokens / 1000) * 0.003).toFixed(4);
 
   return (
-    <aside className="w-96 h-full flex flex-col bg-slate-900 border-l border-slate-800 select-text overflow-hidden">
+    <aside className="w-88 xl:w-96 h-full flex flex-col bg-white dark:bg-[#12141c] border-l border-slate-200 dark:border-[#212638] select-text overflow-hidden text-xs transition-colors">
       {/* Goal Input & Primary Orchestrator Controls */}
-      <div className="p-4 border-b border-slate-800 space-y-3.5 bg-slate-950/40">
+      <div className="p-4 border-b border-slate-200 dark:border-[#212638] space-y-3 bg-slate-50/60 dark:bg-[#151822]/60">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-slate-100 flex items-center gap-2 uppercase tracking-wider font-mono">
-            <Sliders className="w-4 h-4 text-sky-400" />
+          <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 uppercase tracking-wider font-mono">
+            <Sliders className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             <span>Task Orchestrator</span>
           </span>
 
           {/* Workflow State Pill */}
           <div
-            className={`px-3 py-1 rounded-full text-[11px] font-mono font-bold border flex items-center gap-1.5 shadow-sm ${
+            className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold border flex items-center gap-1.5 ${
               workflowMachine.state === 'RUNNING'
-                ? 'bg-sky-500/20 text-sky-300 border-sky-400 animate-pulse'
+                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border-blue-300 dark:border-blue-800'
                 : workflowMachine.state === 'PAUSED_BREAKPOINT'
-                ? 'bg-yellow-400 text-slate-950 border-yellow-300 font-extrabold animate-bounce'
+                ? 'bg-amber-500 text-white border-amber-600 font-extrabold animate-pulse'
                 : workflowMachine.state === 'COMPLETED'
-                ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
                 : workflowMachine.state === 'ABORTED'
-                ? 'bg-rose-500/20 text-rose-300 border-rose-500'
-                : 'bg-slate-800 text-slate-300 border-slate-700'
+                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300 dark:border-rose-800'
+                : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700'
             }`}
           >
             <div
               className={`w-2 h-2 rounded-full ${
                 workflowMachine.state === 'RUNNING'
-                  ? 'bg-sky-400 animate-ping'
+                  ? 'bg-blue-600 animate-ping'
                   : workflowMachine.state === 'PAUSED_BREAKPOINT'
-                  ? 'bg-slate-950'
+                  ? 'bg-white'
                   : workflowMachine.state === 'COMPLETED'
-                  ? 'bg-emerald-400'
+                  ? 'bg-emerald-600'
                   : workflowMachine.state === 'ABORTED'
-                  ? 'bg-rose-400'
-                  : 'bg-slate-500'
+                  ? 'bg-rose-600'
+                  : 'bg-slate-400'
               }`}
             />
             <span>{workflowMachine.state}</span>
@@ -320,9 +316,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
 
         {/* Goal Input Bar */}
-        <div className="space-y-1.5">
-          <label className="text-[11px] text-slate-300 font-semibold flex items-center justify-between">
-            <span>Mission Goal Prompt</span>
+        <div className="space-y-1">
+          <label className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold flex items-center justify-between">
+            <span>Mission Objective</span>
             <span className="text-[10px] text-slate-400 font-mono">Editable</span>
           </label>
           <textarea
@@ -330,25 +326,25 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
             onChange={(e) => setActiveGoal(e.target.value)}
             disabled={workflowMachine.state === 'RUNNING'}
             rows={2}
-            className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 text-xs font-sans placeholder-slate-500 outline-none focus:border-sky-400 resize-none leading-relaxed transition-all shadow-inner disabled:opacity-60"
+            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 text-xs font-sans placeholder-slate-400 outline-none focus:border-blue-600 resize-none leading-relaxed transition-all disabled:opacity-60"
             placeholder="Describe the agent objective..."
           />
         </div>
 
-        {/* Large Prominent Action Buttons */}
+        {/* Primary Action Buttons */}
         <div className="space-y-2">
           {workflowMachine.state === 'RUNNING' ? (
             <div className="flex items-center gap-2">
               <button
                 onClick={handlePauseResume}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-all shadow-[0_0_15px_rgba(251,191,36,0.4)] active:scale-95"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition-all shadow-sm active:scale-95"
               >
                 <Pause className="w-4 h-4" />
-                <span>Pause Execution</span>
+                <span>Pause</span>
               </button>
               <button
                 onClick={handleAbort}
-                className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs transition-all shadow-[0_0_15px_rgba(244,63,94,0.4)] active:scale-95"
+                className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-all shadow-sm active:scale-95"
               >
                 <Square className="w-4 h-4 fill-white" />
                 <span>Abort</span>
@@ -361,14 +357,14 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                   soundEffects.playClick();
                   setApprovalModalOpen(true);
                 }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold text-xs transition-all shadow-[0_0_20px_rgba(250,204,21,0.6)] animate-bounce active:scale-95"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition-all shadow-md active:scale-95"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Inspect & Approve</span>
               </button>
               <button
                 onClick={handleAbort}
-                className="py-2.5 px-3 rounded-xl bg-rose-600/30 text-rose-300 hover:bg-rose-600 hover:text-white border border-rose-500/50 text-xs font-bold transition-colors"
+                className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 dark:bg-slate-800 dark:hover:bg-rose-950/60 dark:text-slate-300 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-700 text-xs font-bold transition-colors"
                 title="Abort Run"
               >
                 <Square className="w-4 h-4" />
@@ -377,7 +373,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           ) : (
             <button
               onClick={handleStartWorkflow}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 hover:from-sky-400 hover:to-purple-500 text-white font-extrabold text-sm transition-all shadow-[0_0_20px_rgba(56,189,248,0.4)] active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-sm active:scale-95"
             >
               <Play className="w-4 h-4 fill-white" />
               <span>Run Multi-Agent Workflow</span>
@@ -385,12 +381,12 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           )}
 
           {/* Speed Multipliers */}
-          <div className="flex items-center justify-between pt-1">
-            <span className="text-[11px] font-mono text-slate-400">Simulation Speed:</span>
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs font-mono font-bold">
+          <div className="flex items-center justify-between pt-0.5">
+            <span className="text-[11px] font-mono text-slate-500">Speed:</span>
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0c0e14] p-1 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-mono font-medium">
               {[
-                { s: 1, label: '1x Normal' },
-                { s: 2, label: '2x Fast' },
+                { s: 1, label: '1x' },
+                { s: 2, label: '2x' },
                 { s: 5, label: '5x Turbo' },
               ].map(({ s, label }) => (
                 <button
@@ -399,10 +395,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     soundEffects.playClick();
                     setSpeedMultiplier(s);
                   }}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
+                  className={`px-2 py-0.5 rounded transition-all ${
                     speedMultiplier === s
-                      ? 'bg-sky-500 text-white shadow-sm font-bold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      ? 'bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 shadow-xs font-bold border border-slate-200 dark:border-slate-700'
+                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
                   {label}
@@ -414,19 +410,18 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
       </div>
 
       {/* Time-Travel Execution Scrubber with Step Buttons */}
-      <div className="p-4 border-b border-slate-800 bg-slate-950/70 space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-200">
-          <span className="flex items-center gap-1.5 uppercase tracking-wider text-[11px] font-mono text-purple-400">
-            <Clock className="w-3.5 h-3.5" />
+      <div className="p-3 border-b border-slate-200 dark:border-[#212638] bg-white dark:bg-[#12141c] space-y-1.5">
+        <div className="flex items-center justify-between text-xs">
+          <span className="flex items-center gap-1.5 uppercase tracking-wider text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400">
+            <Clock className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
             <span>Time-Travel Scrubber</span>
           </span>
-          <span className="text-[11px] font-mono font-bold text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded border border-purple-500/30">
-            {timeTravelIndex === null ? 'LIVE EDGE' : `Step ${timeTravelIndex + 1} of ${timeTravelSnapshots.length}`}
+          <span className="text-[10px] font-mono font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+            {timeTravelIndex === null ? 'LIVE' : `Step ${timeTravelIndex + 1}/${timeTravelSnapshots.length}`}
           </span>
         </div>
 
-        <div className="flex items-center gap-2 pt-1">
-          {/* Step Back button */}
+        <div className="flex items-center gap-2">
           <button
             onClick={() => {
               if (timeTravelSnapshots.length > 0) {
@@ -436,10 +431,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               }
             }}
             disabled={timeTravelSnapshots.length <= 1 || currentIndex <= 0}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+            className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
             title="Previous Step"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5" />
           </button>
 
           <input
@@ -453,10 +448,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               scrubToSnapshot(val);
               soundEffects.playBlip();
             }}
-            className="flex-1 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+            className="flex-1 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
           />
 
-          {/* Step Forward button */}
           <button
             onClick={() => {
               if (timeTravelSnapshots.length > 0) {
@@ -466,10 +460,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               }
             }}
             disabled={timeTravelSnapshots.length <= 1 || currentIndex >= timeTravelSnapshots.length - 1}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 hover:text-white border border-slate-700 transition-colors"
+            className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-40 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
             title="Next Step"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5" />
           </button>
 
           {timeTravelIndex !== null && (
@@ -478,7 +472,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 soundEffects.playClick();
                 scrubToSnapshot(null);
               }}
-              className="text-xs font-mono font-bold px-2 py-1 rounded-lg bg-purple-500 hover:bg-purple-400 text-white transition-colors whitespace-nowrap shadow-sm"
+              className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap shadow-xs"
             >
               Live
             </button>
@@ -486,59 +480,58 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
         </div>
       </div>
 
-      {/* Real-time Telemetry Metrics Bar */}
-      <div className="grid grid-cols-3 gap-2 p-3 border-b border-slate-800 bg-slate-900/40 text-xs font-mono">
-        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 shadow-sm">
-          <div className="text-slate-400 mb-1 flex items-center gap-1.5 font-bold text-[10px]">
-            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+      {/* Telemetry Metrics Bar */}
+      <div className="grid grid-cols-3 gap-2 p-2.5 border-b border-slate-200 dark:border-[#212638] bg-slate-50/50 dark:bg-[#151822]/40 text-xs font-mono">
+        <div className="p-2 rounded-lg bg-white dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800">
+          <div className="text-slate-500 mb-0.5 flex items-center gap-1 font-semibold text-[10px]">
+            <Zap className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
             <span>Speed</span>
           </div>
-          <div className="text-base font-extrabold text-emerald-400">
-            {metrics.currentTps} <span className="text-[10px] font-normal text-slate-400">T/s</span>
+          <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            {metrics.currentTps} <span className="text-[10px] font-normal text-slate-500">T/s</span>
           </div>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 shadow-sm">
-          <div className="text-slate-400 mb-1 flex items-center gap-1.5 font-bold text-[10px]">
-            <Activity className="w-3.5 h-3.5 text-sky-400" />
+        <div className="p-2 rounded-lg bg-white dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800">
+          <div className="text-slate-500 mb-0.5 flex items-center gap-1 font-semibold text-[10px]">
+            <Activity className="w-3 h-3 text-blue-600 dark:text-blue-400" />
             <span>Tokens</span>
           </div>
-          <div className="text-base font-extrabold text-sky-400">
+          <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
             {metrics.totalTokens}
           </div>
         </div>
 
-        <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 shadow-sm">
-          <div className="text-slate-400 mb-1 flex items-center gap-1.5 font-bold text-[10px]">
-            <TrendingUp className="w-3.5 h-3.5 text-purple-400" />
+        <div className="p-2 rounded-lg bg-white dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800">
+          <div className="text-slate-500 mb-0.5 flex items-center gap-1 font-semibold text-[10px]">
+            <TrendingUp className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
             <span>Cost</span>
           </div>
-          <div className="text-base font-extrabold text-purple-400 flex items-center gap-1">
+          <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
             <span>$0.00</span>
-            <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 px-1 py-0.2 rounded">
+            <span className="text-[9px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 px-1 rounded">
               FREE
             </span>
           </div>
         </div>
       </div>
 
-      {/* Prominent Tab Switcher (4 Tabs: Logs, Arena Chat, State/JSON, Cost ROI) */}
-      <div className="flex items-center justify-between p-2 bg-slate-950 border-b border-slate-800 text-xs">
-        <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-800">
+      {/* Clean Segmented Tab Switcher */}
+      <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-[#0c0e14] border-b border-slate-200 dark:border-[#212638] text-xs">
+        <div className="flex items-center gap-1 bg-slate-200/60 dark:bg-[#161923] p-1 rounded-lg">
           <button
             onClick={() => {
               soundEffects.playClick();
               setActiveTab('logs');
             }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all ${
               activeTab === 'logs'
-                ? 'bg-sky-500 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white dark:bg-[#202534] text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
-            title="Terminal Execution Logs"
           >
             <Terminal className="w-3.5 h-3.5" />
-            <span>Logs ({logs.length})</span>
+            <span>Logs</span>
           </button>
 
           <button
@@ -546,15 +539,14 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               soundEffects.playClick();
               setActiveTab('chat');
             }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all ${
               activeTab === 'chat'
-                ? 'bg-sky-500 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white dark:bg-[#202534] text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
-            title="Agent Arena Chat Feed"
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Arena ({chatMessages.length})</span>
+            <span>Arena</span>
           </button>
 
           <button
@@ -562,12 +554,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               soundEffects.playClick();
               setActiveTab('payload');
             }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all ${
               activeTab === 'payload'
-                ? 'bg-sky-500 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white dark:bg-[#202534] text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
-            title="Inspect Structured State & JSON"
           >
             <FileJson className="w-3.5 h-3.5" />
             <span>State</span>
@@ -578,12 +569,11 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               soundEffects.playClick();
               setActiveTab('analytics');
             }}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg font-bold text-[11px] transition-all ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all ${
               activeTab === 'analytics'
-                ? 'bg-sky-500 text-white shadow-sm'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-white dark:bg-[#202534] text-slate-900 dark:text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
-            title="Cost Savings and Performance ROI"
           >
             <DollarSign className="w-3.5 h-3.5" />
             <span>ROI</span>
@@ -599,7 +589,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 clearLogs();
               }}
               title="Clear terminal logs"
-              className="p-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-rose-400 border border-slate-800 transition-colors"
+              className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -612,7 +602,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                 clearChatMessages();
               }}
               title="Clear agent arena chat"
-              className="p-1.5 rounded-lg bg-slate-900 text-slate-400 hover:text-rose-400 border border-slate-800 transition-colors"
+              className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -623,11 +613,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               soundEffects.playClick();
               setExportModalOpen(true);
             }}
-            title="Export Workflow as JSON / Mermaid"
-            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold border border-slate-700 transition-colors"
+            title="Export Workflow JSON"
+            className="p-1 rounded text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
           >
-            <Download className="w-3 h-3 text-sky-400" />
-            <span>Export</span>
+            <Download className="w-3.5 h-3.5" />
           </button>
 
           <button
@@ -636,21 +625,21 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               setImportModalOpen(true);
             }}
             title="Import Workflow JSON"
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className="p-1 rounded text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
           >
-            <Upload className="w-3.5 h-3.5 text-purple-400" />
+            <Upload className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Main Tab Panels */}
-      <div className="flex-1 bg-slate-950 overflow-hidden flex flex-col">
-        {/* TAB 1: Live Streaming Terminal Logs */}
+      {/* Tab Panels */}
+      <div className="flex-1 overflow-hidden flex flex-col bg-white dark:bg-[#12141c]">
+        {/* TAB 1: Logs */}
         {activeTab === 'logs' && (
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Filter Pills */}
-            <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-900 bg-slate-950 text-xs overflow-x-auto">
-              <span className="text-slate-500 mr-1 font-mono text-[11px]">Filter:</span>
+            <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-[#10121a] text-xs overflow-x-auto">
+              <span className="text-slate-400 mr-1 font-mono text-[10px]">Filter:</span>
               {(['ALL', 'THOUGHT', 'TOOL', 'JSON', 'WARN', 'SYSTEM'] as const).map((lvl) => (
                 <button
                   key={lvl}
@@ -658,10 +647,10 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     soundEffects.playClick();
                     setLogFilter(lvl);
                   }}
-                  className={`px-2 py-0.5 rounded-md transition-all font-mono text-[10px] font-bold ${
+                  className={`px-2 py-0.5 rounded transition-all font-mono text-[10px] font-semibold ${
                     logFilter === lvl
-                      ? 'bg-sky-500 text-white shadow-sm'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
                   }`}
                 >
                   {lvl}
@@ -669,108 +658,98 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
               ))}
             </div>
 
-            {/* Scrollable Terminal Output */}
+            {/* Scrollable Output */}
             <div className="flex-1 p-3 overflow-y-auto font-mono text-xs space-y-2 select-text leading-relaxed">
-              {filteredLogs.map((log) => {
-                let badgeClass = 'text-slate-300 bg-slate-800';
-                if (log.level === 'THOUGHT') badgeClass = 'text-cyan-200 bg-cyan-950/80 border border-cyan-700/60 font-bold';
-                if (log.level === 'TOOL') badgeClass = 'text-amber-200 bg-amber-950/80 border border-amber-700/60 font-bold';
-                if (log.level === 'JSON') badgeClass = 'text-purple-200 bg-purple-950/80 border border-purple-700/60 font-bold';
-                if (log.level === 'WARN') badgeClass = 'text-yellow-200 bg-yellow-950/80 border border-yellow-700/60 font-bold';
-                if (log.level === 'ERROR') badgeClass = 'text-rose-200 bg-rose-950/80 border border-rose-700/60 font-bold';
-                if (log.level === 'SYSTEM') badgeClass = 'text-emerald-200 bg-emerald-950/80 border border-emerald-700/60 font-bold';
-
-                return (
-                  <div key={log.id} className="p-2 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded ${badgeClass}`}>
-                          {log.level}
-                        </span>
-                        <span className="text-slate-300 font-bold uppercase">{log.agentRole}</span>
-                      </div>
-                      <span className="font-mono">{new Date(log.timestamp).toLocaleTimeString()}</span>
+              {filteredLogs.map((log) => (
+                <div
+                  key={log.id}
+                  className="p-2 rounded-lg bg-slate-50 dark:bg-[#161923] border border-slate-200 dark:border-slate-800 space-y-1"
+                >
+                  <div className="flex items-center justify-between text-[10px] text-slate-500">
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-1.5 py-0.2 rounded font-bold uppercase text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        {log.level}
+                      </span>
+                      <span className="font-semibold uppercase">{log.agentRole}</span>
                     </div>
-
-                    <div className="text-slate-100 font-sans text-xs break-words pl-1">{log.message}</div>
-
-                    {log.payload && (
-                      <div className="mt-1 p-2 rounded-lg bg-slate-950 border border-slate-800/80 text-emerald-300 text-[11px] overflow-x-auto max-h-36">
-                        <pre>{JSON.stringify(log.payload, null, 2)}</pre>
-                      </div>
-                    )}
+                    <span>{new Date(log.timestamp).toLocaleTimeString()}</span>
                   </div>
-                );
-              })}
+
+                  <div className="text-slate-800 dark:text-slate-200 font-sans text-xs break-words pl-0.5">
+                    {log.message}
+                  </div>
+
+                  {log.payload && (
+                    <div className="mt-1 p-2 rounded bg-slate-100 dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-emerald-400 text-[11px] overflow-x-auto max-h-36">
+                      <pre>{JSON.stringify(log.payload, null, 2)}</pre>
+                    </div>
+                  )}
+                </div>
+              ))}
               <div ref={logsEndRef} />
             </div>
           </div>
         )}
 
-        {/* TAB 2: Agent Arena Chat Feed */}
+        {/* TAB 2: Agent Arena Chat */}
         {activeTab === 'chat' && (
-          <div className="flex-1 flex flex-col overflow-hidden bg-slate-950">
-            <div className="p-2 border-b border-slate-900 text-[11px] font-mono text-slate-400 flex items-center justify-between bg-slate-900/50">
-              <span className="flex items-center gap-1.5 text-sky-400 font-bold">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>Inter-Agent Collaboration Feed</span>
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="p-2 border-b border-slate-200 dark:border-slate-800 text-[11px] font-mono text-slate-500 flex items-center justify-between bg-slate-50 dark:bg-[#10121a]">
+              <span className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-slate-300">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Inter-Agent Dialogue</span>
               </span>
-              <span>{chatMessages.length} Messages</span>
+              <span>{chatMessages.length} msgs</span>
             </div>
 
             <div className="flex-1 p-3 overflow-y-auto space-y-3">
               {chatMessages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
-                  <MessageSquare className="w-8 h-8 opacity-40 text-sky-400" />
-                  <p className="text-xs font-semibold text-slate-400">No agent dialogue yet.</p>
-                  <p className="text-[11px] text-slate-600 max-w-xs">
-                    Start the workflow to observe agents conversing, passing tokens, and sharing structured context.
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-1">
+                  <MessageSquare className="w-8 h-8 opacity-40" />
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">No dialogue recorded yet.</p>
+                  <p className="text-[11px] text-slate-500 max-w-xs">
+                    Start a workflow to view real-time inter-agent messages and handoffs.
                   </p>
                 </div>
               ) : (
                 chatMessages.map((msg) => {
-                  const roleConfig = ROLE_AVATAR_CONFIG[msg.agentRole] || ROLE_AVATAR_CONFIG.supervisor;
+                  const roleCfg = ROLE_AVATAR_CONFIG[msg.agentRole] || ROLE_AVATAR_CONFIG.supervisor;
                   return (
                     <div
                       key={msg.id}
-                      className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2 shadow-md hover:border-slate-700 transition-colors"
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-[#161923] border border-slate-200 dark:border-slate-800 space-y-1.5"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span
-                            className={`w-6 h-6 rounded-lg ${roleConfig.bg} ${roleConfig.text} border ${roleConfig.border} flex items-center justify-center font-bold text-[10px] uppercase font-mono shadow-sm`}
-                          >
-                            {msg.agentRole[0]}
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${roleCfg.badge}`}>
+                            {roleCfg.text}
                           </span>
-                          <span className="text-xs font-bold text-slate-100">
+                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
                             {msg.agentName}
                           </span>
-                          <span className="text-[10px] font-mono text-slate-400 uppercase bg-slate-950 px-1.5 py-0.2 rounded border border-slate-800">
-                            {msg.agentRole}
-                          </span>
                         </div>
-                        <span className="text-[10px] font-mono text-slate-500">
+                        <span className="text-[10px] font-mono text-slate-400">
                           {new Date(msg.timestamp).toLocaleTimeString()}
                         </span>
                       </div>
 
-                      <div className="text-xs text-slate-200 font-sans leading-relaxed pl-1">
+                      <div className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-sans">
                         {msg.content}
                       </div>
 
                       {msg.toolCall && (
-                        <div className="p-2 rounded-xl bg-slate-950 border border-amber-500/30 text-amber-300 text-[11px] font-mono flex items-center gap-1.5 shadow-inner">
-                          <Wrench className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-[11px] font-mono flex items-center gap-1.5">
+                          <Wrench className="w-3 h-3 shrink-0" />
                           <span className="font-bold">{msg.toolCall.name}</span>
-                          <span className="text-slate-400 truncate">
+                          <span className="text-slate-500 dark:text-slate-400 truncate">
                             ({JSON.stringify(msg.toolCall.args)})
                           </span>
                         </div>
                       )}
 
                       {msg.tokens && (
-                        <div className="flex justify-end pt-1">
-                          <span className="text-[10px] font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded border border-slate-900">
+                        <div className="flex justify-end pt-0.5">
+                          <span className="text-[10px] font-mono text-slate-500">
                             ⚡ {msg.tokens} tokens
                           </span>
                         </div>
@@ -784,7 +763,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           </div>
         )}
 
-        {/* TAB 3: Interactive JSON Payload Inspector */}
+        {/* TAB 3: State / JSON */}
         {activeTab === 'payload' && (
           <div className="h-full">
             <JsonInspector
@@ -804,79 +783,73 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           </div>
         )}
 
-        {/* TAB 4: Cost & Performance ROI Analytics */}
+        {/* TAB 4: Cost ROI */}
         {activeTab === 'analytics' && (
-          <div className="flex-1 p-4 overflow-y-auto space-y-4 font-sans text-xs bg-slate-950">
-            {/* Cost Savings Hero Banner */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-sky-950/60 border border-emerald-500/40 shadow-xl space-y-3">
+          <div className="flex-1 p-4 overflow-y-auto space-y-4 font-sans text-xs">
+            {/* Hero Card */}
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#161923] border border-slate-200 dark:border-slate-800 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Cost Efficiency ROI</span>
                 </span>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold border border-emerald-500/40">
-                  100% IN-BROWSER
+                <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
+                  100% Client-Side
                 </span>
               </div>
 
-              <div className="text-3xl font-black text-white flex items-baseline gap-2">
+              <div className="text-2xl font-black text-slate-900 dark:text-white flex items-baseline gap-2">
                 <span>$0.00</span>
-                <span className="text-xs font-semibold text-emerald-400">Total Spent</span>
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Total Spent</span>
               </div>
 
-              <p className="text-slate-300 text-xs leading-relaxed">
-                By executing models and agents natively in your browser tab (Web Audio, WebGPU, and client simulation), you bypass cloud GPU billings completely.
+              <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed">
+                By orchestrating models directly in the browser, you incur zero cloud API costs.
               </p>
             </div>
 
-            {/* Comparison Table */}
-            <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3 shadow-md">
-              <h4 className="text-xs font-bold text-slate-100 flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-sky-400" />
-                <span>Cloud API Cost Comparison</span>
+            {/* Comparison */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#161923] border border-slate-200 dark:border-slate-800 space-y-2.5">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <span>Equivalent Cloud API Cost</span>
               </h4>
 
-              <div className="space-y-2 font-mono text-xs">
-                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="space-y-1.5 font-mono text-xs">
+                <div className="p-2 rounded-lg bg-white dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                   <div>
-                    <div className="text-slate-200 font-bold">Luminate UI (Browser)</div>
-                    <div className="text-[10px] text-emerald-400 font-sans">Zero API Keys, Pure Client-Side</div>
+                    <div className="text-slate-800 dark:text-slate-200 font-bold">Luminate UI</div>
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-sans">Client-side execution</div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-emerald-400 font-black text-sm">$0.00</span>
-                  </div>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">$0.00</span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-between opacity-85">
+                <div className="p-2 rounded-lg bg-white dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800 flex items-center justify-between opacity-85">
                   <div>
-                    <div className="text-slate-300 font-semibold">OpenAI GPT-4o</div>
-                    <div className="text-[10px] text-slate-500 font-sans">$5.00 / 1M tokens equivalent</div>
+                    <div className="text-slate-700 dark:text-slate-300 font-semibold">OpenAI GPT-4o</div>
+                    <div className="text-[10px] text-slate-500 font-sans">$5.00 / 1M tokens</div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-rose-400 font-bold">${gpt4oCost}</span>
-                  </div>
+                  <span className="text-slate-700 dark:text-slate-300 font-bold">${gpt4oCost}</span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-between opacity-85">
+                <div className="p-2 rounded-lg bg-white dark:bg-[#0c0e14] border border-slate-200 dark:border-slate-800 flex items-center justify-between opacity-85">
                   <div>
-                    <div className="text-slate-300 font-semibold">Anthropic Claude 3.5 Sonnet</div>
-                    <div className="text-[10px] text-slate-500 font-sans">$3.00 / 1M tokens equivalent</div>
+                    <div className="text-slate-700 dark:text-slate-300 font-semibold">Claude 3.5 Sonnet</div>
+                    <div className="text-[10px] text-slate-500 font-sans">$3.00 / 1M tokens</div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-amber-400 font-bold">${claudeCost}</span>
-                  </div>
+                  <span className="text-slate-700 dark:text-slate-300 font-bold">${claudeCost}</span>
                 </div>
               </div>
             </div>
 
-            {/* Privacy & Hardware Efficiency */}
-            <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5 shadow-md">
-              <h4 className="text-xs font-bold text-slate-100 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-emerald-400" />
+            {/* Privacy */}
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#161923] border border-slate-200 dark:border-slate-800 space-y-1.5">
+              <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Zero-Data-Retention Guarantee</span>
               </h4>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                All prompt vectors, scraped DOM nodes, and tool outputs stay strictly inside your local browser memory. No external server receives your proprietary workflows.
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                All prompt text, extracted DOM nodes, and outputs remain strictly in your browser session.
               </p>
             </div>
           </div>
